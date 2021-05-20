@@ -1,10 +1,9 @@
-import Header from "../components/shared/Header"
-const cv = () => {
+import BaseLayout from "../components/layouts/BaseLayout"
+const CV = () => {
     return (
-        <>
-            <Header />
+        <BaseLayout>
             <h1>I am cv page</h1>
-        </>
+        </BaseLayout>
     )
 }
-export default cv;
+export default CV;
