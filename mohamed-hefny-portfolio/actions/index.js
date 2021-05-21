@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 export const useGetStarredRepos = () => {
     const [starredRepos, setStarredRepos] = useState([]);
     const [error, setError] = useState();
+    const [loading, setLoading] = useState(true);
     useEffect(() => {
         async function getStarredRepos() {
             const res = await fetch('/api/v1/starredRepo');
@@ -16,9 +17,10 @@ export const useGetStarredRepos = () => {
             } else {
                 setStarredRepos(result);
             }
+            setLoading(false);
         }
         getStarredRepos();
     }, [])
     //returns as an object {}
-    return { starredRepos, error }
+    return { starredRepos, error, loading }
 }

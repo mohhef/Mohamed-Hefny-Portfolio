@@ -5,7 +5,7 @@ import { useGetStarredRepos } from "@/actions";
 
 const Portfolios = () => {
 
-    const { starredRepos, error } = useGetStarredRepos();
+    const { starredRepos, error, loading } = useGetStarredRepos();
 
     const renderStarrredRepos = () => {
         return starredRepos.map(starredRepo =>
@@ -19,6 +19,10 @@ const Portfolios = () => {
         <BaseLayout>
             <BasePage>
                 <h1>I am portfolios page</h1>
+                {
+                    loading &&
+                    <p>Loading data...</p>
+                }
                 {
                     starredRepos &&
                     <ul>
