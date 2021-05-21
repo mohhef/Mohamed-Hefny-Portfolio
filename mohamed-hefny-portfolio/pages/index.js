@@ -1,7 +1,9 @@
 import React from 'react';
-import BaseLayout from '../components/layouts/BaseLayout';
+import BaseLayout from '@/components/layouts/BaseLayout';
+import Typed from 'react-typed';
 import { Container, Row, Col } from 'reactstrap';
 
+const roles = ["Passionate Developer", "Enthusiastic learner", "Team Player", "Spring | React JS | Next JS", "MongoDb | Neo4j | Mysql", "Docker | Openshift | Kuburnetess", "Jenkins | Gitlab"]
 class Index extends React.Component {
   render() {
     return (
@@ -17,12 +19,12 @@ class Index extends React.Component {
                   <div className={`flipper`}>
                     <div className="back">
                       <div className="hero-section-content">
-                        <h2> Full Stack Web Developer </h2>
+                        <h2> Software Developer </h2>
                         <div className="hero-section-content-intro">
                           Have a look at my portfolio and job history.
                         </div>
                       </div>
-                      <img className="image" src="/images/section-1.png"/>
+                      <img className="image" src="/images/section-1.png" />
                       <div className="shadow-custom">
                         <div className="shadow-inner"> </div>
                       </div>
@@ -37,6 +39,17 @@ class Index extends React.Component {
                     Get informed, collaborate and discover projects I was working on through the years!
                   </h1>
                 </div>
+                <Typed
+                  loop
+                  typeSpeed={20}
+                  backSpeed={40}
+                  strings={roles}
+                  backDelay={1000}
+                  loopCount={0}
+                  showCursor
+                  className="self-typed"
+                  cursorChar="|"  
+                />
                 <div className="hero-welcome-bio">
                   <h1>
                     Let's take a look on my work.

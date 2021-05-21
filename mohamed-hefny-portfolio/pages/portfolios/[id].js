@@ -1,4 +1,5 @@
-import BaseLayout from "../../components/layouts/BaseLayout";
+import BaseLayout from "@/components/layouts/BaseLayout";
+import BasePage from "@/components/BasePage"
 import axios from "axios"
 import { useRouter } from "next/router"
 
@@ -7,8 +8,10 @@ const Portfolio = ({ repo }) => {
     console.log(repo)
     return (
         <BaseLayout>
-            <h1>{repo.name}</h1>
-            <h2>{repo.description}</h2>
+            <BasePage>
+                <h1>{repo.name}</h1>
+                <h2>{repo.description}</h2>
+            </BasePage>
         </BaseLayout>
     )
 }

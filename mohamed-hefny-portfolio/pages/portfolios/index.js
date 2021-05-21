@@ -1,25 +1,37 @@
-import BaseLayout from "../../components/layouts/BaseLayout"
+import {useEffect} from 'react';
+import BaseLayout from "@/components/layouts/BaseLayout"
+import BasePage from "@/components/BasePage"
 import axios from "axios"
 import Link from "next/link"
 import { render } from "react-dom"
 
+
+useEffect(()=>{
+    async function getPosts(){
+        const res = await fetch('/api/v1/posts');
+        const data = await res.json;
+        debugger
+    }
+    getPosts();
+}, [])
 const Portfolios = ({ starredRepos }) => {
 
     const renderStarrredRepos = () => {
-        return starredRepos.map(starredRepos => 
-        <li key={starredRepos.repo.id}>
-            <Link href = {`/portfolios/${starredRepos.repo.id}`}>
-            {starredRepos.repo.name}
-            </Link>
-        </li>)
+        return starredRepos.map(starredRepos =>
+            <li key={starredRepos.repo.id}>
+                <Link href={`/portfolios/${starredRepos.repo.id}`}>
+                    {starredRepos.repo.name}
+                </Link>
+            </li>)
     }
-    console.log(starredRepos);
     return (
         <BaseLayout>
-            <h1>I am portfolios page</h1>
-            <ul>
-                {renderStarrredRepos()}
-            </ul>
+            <BasePage>
+                <h1>I am portfolios page</h1>
+                <ul>
+                    {renderStarrredRepos()}
+                </ul>
+            </BasePage>
         </BaseLayout>
     )
 }
