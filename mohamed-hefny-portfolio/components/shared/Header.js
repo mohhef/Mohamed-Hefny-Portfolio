@@ -22,21 +22,17 @@ const BsNavLink = props => {
 
 const LoginLink = () => {
     return (
-        <span className="nav-link port-navbar-link clickable">
-            Login
-        </span>
+        <a className="navbar-brand port-navbar-link clickable" href="/api/v1/auth/login">Login</a>
     )
 }
 
 const LogoutLink = () => {
     return (
-        <span className="nav-link port-navbar-link clickable">
-            Logout
-        </span>
+        <a className="navbar-brand port-navbar-link clickable" href="/api/v1/auth/logout">Logout</a>
     )
 }
 
-const Header = () => {
+const Header = ({ user, isLoading }) => {
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen(!isOpen);
 
@@ -72,12 +68,24 @@ const Header = () => {
                         </NavItem>
                     </Nav>
                     <Nav navbar>
-                        <NavItem className="port-navbar-item">
-                            <LoginLink />
-                        </NavItem>
-                        <NavItem className="port-navbar-item">
-                            <LogoutLink />
-                        </NavItem>
+                        {
+                            !isLoading &&
+                            <>
+                                {
+                                    user &&
+                                    <NavItem className="port-navbar-item">
+                                        <LogoutLink />
+                                    </NavItem>
+                                }
+                                {
+                                    !user &&
+                                    <NavItem className="port-navbar-item">
+                                        <LoginLink />
+                                    </NavItem>
+                                }
+                            </>
+                        }
+
                     </Nav>
                 </Collapse>
             </Navbar>

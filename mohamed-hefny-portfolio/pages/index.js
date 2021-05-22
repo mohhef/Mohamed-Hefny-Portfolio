@@ -1,13 +1,17 @@
-import React from 'react';
 import BaseLayout from '@/components/layouts/BaseLayout';
-import Typed from 'react-typed';
 import { Container, Row, Col } from 'reactstrap';
+import { useUser } from '@auth0/nextjs-auth0';
+import Typed from 'react-typed';
+import React from 'react';
 
 const roles = ["Passionate Developer", "Enthusiastic learner", "Team Player", "Spring | React JS | Next JS", "MongoDb | Neo4j | Mysql", "Docker | Openshift | Kuburnetess", "Jenkins | Gitlab"]
-class Index extends React.Component {
-  render() {
+const Index = () =>{
+  const { user, error, isLoading } = useUser();
     return (
-      <BaseLayout className="cover">
+      <BaseLayout 
+      user = {user}
+      isLoading = {isLoading}
+      className="cover">
         <div className="main-section">
           <div className="background-image">
             <img src="/images/background-index.png" />
@@ -61,7 +65,6 @@ class Index extends React.Component {
         </div>
       </BaseLayout>
     )
-  }
 }
 
 export default Index;
