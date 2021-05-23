@@ -22,13 +22,13 @@ const BsNavLink = props => {
 
 const LoginLink = () => {
     return (
-        <a className="navbar-brand port-navbar-link" href="/api/v1/auth/login">Login</a>
+        <a className="navbar-brand port-navbar-link" href="/api/auth/login">Login</a>
     )
 }
 
 const LogoutLink = () => {
     return (
-        <a className="navbar-brand port-navbar-link" href="/api/v1/auth/logout">Logout</a>
+        <a className="navbar-brand port-navbar-link" href="/api/auth/logout">Logout</a>
     )
 }
 
