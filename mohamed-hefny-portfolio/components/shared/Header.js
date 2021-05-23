@@ -22,13 +22,13 @@ const BsNavLink = props => {
 
 const LoginLink = () => {
     return (
-        <a className="navbar-brand port-navbar-link clickable" href="/api/v1/auth/login">Login</a>
+        <a className="navbar-brand port-navbar-link" href="/api/v1/auth/login">Login</a>
     )
 }
 
 const LogoutLink = () => {
     return (
-        <a className="navbar-brand port-navbar-link clickable" href="/api/v1/auth/logout">Logout</a>
+        <a className="navbar-brand port-navbar-link" href="/api/v1/auth/logout">Logout</a>
     )
 }
 
@@ -65,6 +65,9 @@ const Header = ({ user, isLoading }) => {
                         </NavItem>
                         <NavItem className="port-navbar-item">
                             <BsNavLink href="/cv" title="Cv" />
+                        </NavItem>
+                        <NavItem className="port-navbar-item">
+                            <BsNavLink href="/secret" title="Secret" />
                         </NavItem>
                     </Nav>
                     <Nav navbar>
