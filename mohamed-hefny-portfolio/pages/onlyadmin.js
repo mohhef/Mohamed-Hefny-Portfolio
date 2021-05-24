@@ -8,7 +8,7 @@ const OnlyAdmin = ({user, isLoading}) => {
         return (
             <BaseLayout user={user} isLoading={isLoading}>
                 <BasePage>
-                    <h1>hello{user.name}</h1>
+                    <h1>Hello {user.name}</h1>
                 </BasePage>
             </BaseLayout>
         )
