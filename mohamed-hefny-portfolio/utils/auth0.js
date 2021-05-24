@@ -1,6 +1,9 @@
 
 import {getSession} from '@auth0/nextjs-auth0'
 
+export const isAuthorized = (user,role) =>{
+    return user['https://mohamed-hefny' + '/roles'].includes(role);
+}
 
 export const withAuth = (getData) =>{
     return async({req,res})=>{
