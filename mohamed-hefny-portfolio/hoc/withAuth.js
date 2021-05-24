@@ -8,11 +8,11 @@ const withAuth = (Component) => {
             return <p>Loading...</p>
         }
         
-        // if (!user) {
-        //     return <Redirect ssr to="/api/v1/auth/login" />
-        // } else {
+        if (!user) {
+            return <Redirect ssr to="/api/auth/login" />
+        } else {
             return <Component user={user} isLoading={isLoading} {...props} />
-        //}
+        }
 
     }
 }
