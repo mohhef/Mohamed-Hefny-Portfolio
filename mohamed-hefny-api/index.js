@@ -1,11 +1,16 @@
 const express = require('express');
 const server = express();
 
-server.get('/test',(req,res)=>{
-    return res.json({message: "Hello world"});
-})
-const PORT = parseInt(process.env.port)||3001;
-server.listen(PORT, (err)=>{
-    if(err)console.log(err);
-    console.log('Server ready on port:',PORT);
-})
+async function runServer() {
+    await require('./db').connect();
+    server.use('/api/v1/portfolio', require('./routes/portfolio'))
+
+    const PORT = parseInt(process.env.port) || 3001;
+    server.listen(PORT, (err) => {
+        if (err) console.log(err);
+        else {
+            console.log('Server ready on port:', PORT);
+        }
+    })
+}
+runServer();
