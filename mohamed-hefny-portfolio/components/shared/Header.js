@@ -58,6 +58,9 @@ const Header = ({ user, isLoading }) => {
                             <BsNavLink href="/portfolios" title="Portfolios" />
                         </NavItem>
                         <NavItem className="port-navbar-item">
+                            <BsNavLink href="/timeline" title="Timeline" />
+                        </NavItem>
+                        <NavItem className="port-navbar-item">
                             <BsNavLink href="/blogs" title="Blogs" />
                         </NavItem>
                         <NavItem className="port-navbar-item">
