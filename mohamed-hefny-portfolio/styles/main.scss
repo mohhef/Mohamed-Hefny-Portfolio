@@ -8,7 +8,8 @@
   position: absolute;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   font-family: "Montserrat", "Helvetica";
@@ -17,14 +18,18 @@ html, body {
 .clickable {
   cursor: pointer;
 }
-.self-typed{
+
+.self-typed {
   font-size: 30px;
   color: white;
   font-weight: bold;
-  letter-spacing: 2px; 
+  letter-spacing: 2px;
 }
 
-.base-page{
+.base-page {
   padding-top: 150px;
-  color: white;
+
+  h1 {
+    color: white;
+  }
 }
