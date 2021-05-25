@@ -1,9 +1,9 @@
 import BaseLayout from "@/components/layouts/BaseLayout"
 import BasePage from "@/components/BasePage"
-import Timeline  from "./timeline"
+import Timeline  from "./timelineelement"
 
 
-const history = () => {
+const History = () => {
     return (
         <BaseLayout>
             <BasePage>
@@ -14,4 +14,4 @@ const history = () => {
     )
 
 }
-export default history;
+export default History;

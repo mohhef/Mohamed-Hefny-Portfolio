@@ -1,0 +1,42 @@
+  .localclass :global(.vertical-timeline-element-content) {
+    box-shadow: 0 0.25em 0.5em 0 rgba(0, 0, 0, 0.25), 0 0.4em 1.25em 0 rgba(0, 0, 0, 0.15) !important;
+    padding: 2em 3em !important;
+  }
+
+
+  .date {
+    color: rgb(201, 251, 255);
+  }
+
+  #description {
+    margin: 1.5em 0 2em 0;
+  }
+
+  .localclass :global(.button) {
+    text-decoration: none;
+    padding: 0.5em 1em;
+    border-radius: 5px;
+    color: white;
+  }
+.button {
+  text-decoration: none;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+  color: white;
+}
+  .timelinebutton {
+    background-color: #06d6a0;
+  }
+
+  .timelinebutton:hover {
+    background-color: #0ac593;
+  }
+
+  @media only screen and (max-width: 1700px) {
+    .localclass :global(.vertical-timeline-element-date) {
+      display: block !important;
+      float: none !important;
+      color: rgb(44, 44, 44);
+      margin-top: 1.5em;
+    }
+  }

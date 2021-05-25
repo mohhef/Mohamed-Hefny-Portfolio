@@ -8,7 +8,7 @@ const About = () => {
     return (
         <BaseLayout  user = {user} isLoading = {isLoading}>
             <BasePage>
-                <h1>I am about page</h1>
+                <h1>About</h1>
             </BasePage>
         </BaseLayout>
     )

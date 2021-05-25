@@ -7,7 +7,7 @@ const CV = () => {
     return (
         <BaseLayout user = {user} isLoading = {isLoading}>
             <BasePage>
-                <h1>I am cv page</h1>
+                <h1>CV</h1>
             </BasePage>
         </BaseLayout >
     )

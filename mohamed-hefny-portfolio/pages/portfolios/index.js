@@ -20,7 +20,7 @@ const Portfolios = () => {
     return (
         <BaseLayout  user = {user} isLoading = {isLoading}>
             <BasePage>
-                <h1>I am portfolios page</h1>
+                <h1>Portfolio</h1>
                 {
                     loading &&
                     <p>Loading data...</p>
