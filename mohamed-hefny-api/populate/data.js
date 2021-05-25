@@ -1,5 +1,5 @@
 const data = {
-    portfolio: [
+    timeline: [
         {
             title: 'Job in Netcentric',
             company: 'Netcentric',

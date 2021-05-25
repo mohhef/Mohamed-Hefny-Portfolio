@@ -6,18 +6,18 @@ import {
 import 'react-vertical-timeline-component/style.min.css';
 import styles from '@/styles/pages/history/timelineelement.module.scss'
 
-const Timeline = () => {
+const Timeline = ({ timeline }) => {
     const icons = icon;
     return (
         <div className={styles.localclass}>
             <VerticalTimeline>
-                {data.map((element, key) => {
+                {timeline.map((element, key) => {
                     const IconComp = icons[element.type].iconName
                     return (
                         <VerticalTimelineElement
                             key={key}
                             dateClassName={styles.date}
-                            date = {element.date}
+                            date={element.date}
                             icon={<IconComp />}
                             iconStyle={icons[element.type].style}
                         >

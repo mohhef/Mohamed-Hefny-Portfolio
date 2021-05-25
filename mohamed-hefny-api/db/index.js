@@ -1,7 +1,7 @@
 const config = require('../config/dev')
 const mongoose = require('mongoose');
 
-require('./model/portfolio');
+require('./model/timeline');
 
 exports.connect = () => {
     return mongoose.connect(config.DB_URI, {

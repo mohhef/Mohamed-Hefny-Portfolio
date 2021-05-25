@@ -3,7 +3,7 @@ const server = express();
 
 async function runServer() {
     await require('./db').connect();
-    server.use('/api/v1/portfolio', require('./routes/portfolio'))
+    server.use('/api/v1/timeline', require('./routes/timeline'))
 
     const PORT = parseInt(process.env.port) || 3001;
     server.listen(PORT, (err) => {

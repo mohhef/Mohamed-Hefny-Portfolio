@@ -1,19 +1,19 @@
 import BaseLayout from "@/components/layouts/BaseLayout"
 import BasePage from "@/components/BasePage"
 import Link from "next/link"
-import { useGetPosts } from "@/actions";
+import { useGetPortfolio } from "@/actions";
 import { useUser } from '@auth0/nextjs-auth0';
 
 
-const Portfolios = () => {
-    const { data, error, loading } = useGetPosts();
+const Portfolio = () => {
+    const { data, error, loading } = useGetPortfolio();
     const { user, isLoading } = useUser();
 
-    const renderStarrredRepos = () => {
-        return data.map(starredRepo =>
-            <li key={starredRepo.id}>
-                <Link href={`/portfolios/${starredRepo.id}`}>
-                    {starredRepo.name}
+    const renderPortfolio = () => {
+        return data.map(portfolio =>
+            <li key={portfolio.id}>
+                <Link href={`/portfolio/${portfolio.id}`}>
+                    {portfolio.name}
                 </Link>
             </li>)
     }
@@ -28,7 +28,7 @@ const Portfolios = () => {
                 {
                     data &&
                     <ul>
-                        {renderStarrredRepos()}
+                        {renderPortfolio()}
                     </ul>
                 }
                 {
@@ -41,4 +41,4 @@ const Portfolios = () => {
     )
 }
 
-export default Portfolios;
+export default Portfolio;

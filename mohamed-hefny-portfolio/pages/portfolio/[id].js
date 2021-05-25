@@ -7,7 +7,7 @@ import { useUser } from '@auth0/nextjs-auth0';
 
 const Portfolio = () => {
     const router = useRouter();
-    const { data: repo, error, loading } = useGetPostsById(router.query.id);
+    const { data: repo, error, loading } = useGetPortfolioById(router.query.id);
     const { user, isLoading } = useUser();
     return (
         <BaseLayout  user = {user} isLoading = {isLoading}>

@@ -18,3 +18,10 @@ stages:
   before_script:
     - docker --version
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+
+build:builder:
+  extends: .base
+  stage: build
+  script:
+    - docker build --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from "$IMAGE_TEST" --target builder -t "$IMAGE_TEST" .
+    - docker push "$IMAGE_TEST"

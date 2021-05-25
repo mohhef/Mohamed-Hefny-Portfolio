@@ -10,12 +10,12 @@ const fetcher = (url) =>
         }
     });
 
-export const useGetPosts = () => {
+export const useGetPortfolio = () => {
     const{data, error, ...rest} =  useSWR('/api/v1/starredRepo', fetcher)
     return{data,error, loading: !data && !error, ...rest}
 }
 
-export const useGetPostsById = (id) => {
+export const useGetPortfolioById = (id) => {
     const{data, error, ...rest} =  useSWR(id?`/api/v1/starredRepo/${id}`:null, fetcher)
     return{data,error, loading: !data && !error, ...rest}
 }

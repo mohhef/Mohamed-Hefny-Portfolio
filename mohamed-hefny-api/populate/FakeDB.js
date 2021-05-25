@@ -1,14 +1,14 @@
-const {portfolio} = require('./data') 
-const Portfolio =  require('../db/model/portfolio')
+const {timeline} = require('./data') 
+const Timeline =  require('../db/model/timeline')
 
 class FakeDB {
 
     async clean() {
-        await Portfolio.deleteMany({});
+        await Timeline.deleteMany({});
     }
 
     async addData() {
-        await Portfolio.create(portfolio)
+        await Timeline.create(timeline)
     }
 
     async populate() {

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const portfolioSchema = new Schema({
+const timelineSchema = new Schema({
     title: {type: String, required: true},
     company: {type: String},
     companyWbsite: {type: String},
@@ -12,4 +12,4 @@ const portfolioSchema = new Schema({
     endDate: {type: Date}
 })
 
-module.exports = mongoose.model('Portfolio', portfolioSchema);
+module.exports = mongoose.model('Timeline', timelineSchema);
