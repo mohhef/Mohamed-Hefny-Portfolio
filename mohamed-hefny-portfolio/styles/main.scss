@@ -3,6 +3,7 @@
 @import "./components/header";
 // Pages
 @import './index';
+@import './portfolio';
 
 .absolute {
   position: absolute;
@@ -33,17 +34,19 @@ body {
 
 .base-page {
   padding-top: 150px;
-
-  h1 {
-    font-size: 10em;
-    text-align: center;
+  background-color: #ecedee;
+  min-height: 100vh;
+  .page-header-title{
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 20px;
     font-family: "Bebas Neue", sans-serif;
-    }
-
+  }
   h3 {
     padding-top: 0.25em;
   }
 }
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

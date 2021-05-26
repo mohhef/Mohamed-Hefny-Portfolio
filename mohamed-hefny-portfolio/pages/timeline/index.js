@@ -8,7 +8,6 @@ const History = ({timeline}) => {
     return (
         <BaseLayout>
             <BasePage>
-                <h1 className="title">Timeline</h1>
                 <Timeline timeline={timeline}/>
             </BasePage>
         </BaseLayout >

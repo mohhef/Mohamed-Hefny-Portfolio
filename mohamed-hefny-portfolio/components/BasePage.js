@@ -1,16 +1,22 @@
-import {Container} from "reactstrap"
+import { Container } from "reactstrap"
 import {
     VerticalTimeline,
     VerticalTimelineElement
 } from "react-vertical-timeline-component"
 import 'react-vertical-timeline-component/style.min.css';
 
-const BasePage = props =>{
-    const {className="", children} = props;
-    return(
-        <div className = {`base-page ${props.className}`}>
+const BasePage = props => {
+    const { className = "", header, children } = props;
+    return (
+        <div className={`base-page ${className}`}>
             <Container>
-                {props.children}
+                {
+                    header &&
+                    <div className="page-header">
+                        <h1 className="page-header-title">{header}</h1>
+                    </div>
+                }
+                {children}
             </Container>
         </div>
     )

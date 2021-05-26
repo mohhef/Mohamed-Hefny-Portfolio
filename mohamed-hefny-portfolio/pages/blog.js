@@ -7,7 +7,6 @@ const Blog = () => {
     return (
         <BaseLayout  user = {user} isLoading = {isLoading}>
             <BasePage>
-                <h1>Blog</h1>
             </BasePage>
         </BaseLayout>
     )

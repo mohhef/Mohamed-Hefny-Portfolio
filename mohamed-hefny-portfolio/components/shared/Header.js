@@ -32,15 +32,14 @@ const LogoutLink = () => {
     )
 }
 
-const Header = ({ user, isLoading }) => {
+const Header = ({ user, isLoading, className }) => {
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen(!isOpen);
 
     return (
         <div>
             <Navbar
-                className="port-navbar port-default absolute"
-                color="transparent"
+                className={`port-navbar port-default absolute ${className}`}
                 dark
                 expand="md">
                 <div className="navbar-brand">

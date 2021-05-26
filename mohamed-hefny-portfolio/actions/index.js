@@ -11,12 +11,12 @@ const fetcher = (url) =>
     });
 
 export const useGetPortfolio = () => {
-    const{data, error, ...rest} =  useSWR('/api/v1/starredRepo', fetcher)
+    const{data, error, ...rest} =  useSWR('/api/v1/portfolio', fetcher)
     return{data,error, loading: !data && !error, ...rest}
 }
 
 export const useGetPortfolioById = (id) => {
-    const{data, error, ...rest} =  useSWR(id?`/api/v1/starredRepo/${id}`:null, fetcher)
+    const{data, error, ...rest} =  useSWR(id?`/api/v1/portfolio/${id}`:null, fetcher)
     return{data,error, loading: !data && !error, ...rest}
 }
 

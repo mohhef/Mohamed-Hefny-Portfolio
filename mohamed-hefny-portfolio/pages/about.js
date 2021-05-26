@@ -8,7 +8,6 @@ const About = () => {
     return (
         <BaseLayout  user = {user} isLoading = {isLoading}>
             <BasePage>
-                <h1>About</h1>
             </BasePage>
         </BaseLayout>
     )

@@ -2,8 +2,12 @@
 .port-navbar.port-default {
     width: 100%;
     z-index: 15;
-    padding: 40px;
+    padding: 25px;
   
+    &.with-bg{
+      background-color: #2C3E50;
+    }
+
     .port-navbar {
       &-brand {
         color: white;

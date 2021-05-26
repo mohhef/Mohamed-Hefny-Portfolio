@@ -9,6 +9,7 @@ const Index = () =>{
   const { user, error, isLoading } = useUser();
     return (
       <BaseLayout 
+      navClass = "transparent"
       user = {user}
       isLoading = {isLoading}
       className="cover">
