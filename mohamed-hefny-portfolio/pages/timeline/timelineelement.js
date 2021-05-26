@@ -15,9 +15,9 @@ const Timeline = ({ timeline }) => {
                     const IconComp = icons[element.type].iconName
                     return (
                         <VerticalTimelineElement
-                            key={key}
+                            key={element._id}
                             dateClassName={styles.date}
-                            date={element.date}
+                            date={element.startDate}
                             icon={<IconComp />}
                             iconStyle={icons[element.type].style}
                         >

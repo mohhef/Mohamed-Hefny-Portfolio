@@ -40,8 +40,8 @@ const Index = () =>{
               <Col md="6" className="hero-welcome-wrapper">
                 <div className="hero-welcome-text">
                   <h1>
-                    Welcome to the portfolio website of Mohamed Hefny.
-                    Get informed, collaborate and discover projects I was working on through the years!
+                    Welcome To My Portfolio Website.
+                    Get informed, collaborate and discover projects I was working on throughout the years!
                   </h1>
                 </div>
                 <Typed

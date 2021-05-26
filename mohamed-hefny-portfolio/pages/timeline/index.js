@@ -18,6 +18,7 @@ const History = ({timeline}) => {
 export async function getStaticProps() {
     const json = await new TimelineApi().getAll();
     const timeline = json.data;
+    debugger
     return {
         props: { timeline }
     }
