@@ -1,7 +1,7 @@
 import  WorkIcon  from "@/styles/images/work.svg"
 import  SchoolIcon  from "@/styles/images/school.svg"
 
-export const icon = {
+const icon = {
         work: {
             iconName: WorkIcon,
             style: {
@@ -16,3 +16,4 @@ export const icon = {
         }
     }
 
+export default icon;

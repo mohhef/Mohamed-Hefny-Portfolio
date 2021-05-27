@@ -2,7 +2,7 @@ import axios from "axios"
 
 export default async (req, res) => {
   try {
-    const axiosRes = await axios.get('https://api.github.com/users/mohhef/starred',
+    const axiosRes = await axios.get(`${process.env.GITHUB_API_URL}/users/mohhef/starred`,
       {
         headers: {
           'Authorization': `token ${process.env.GITHUB_ACCESS_TOKEN}`

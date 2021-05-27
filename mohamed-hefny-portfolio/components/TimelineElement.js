@@ -1,5 +1,4 @@
-import { data } from "@/data.js"
-import { icon } from "./icon"
+import  icon  from "./icon"
 import {
     VerticalTimeline, VerticalTimelineElement
 } from "react-vertical-timeline-component"
