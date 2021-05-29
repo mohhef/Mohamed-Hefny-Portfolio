@@ -1,8 +1,16 @@
 import axios from 'axios';
 
-class TimelineApi{
-    getAll(){
-        return axios.get('http://localhost:3001/api/v1/timeline');
+class TimelineApi {
+
+    constructor(){
+        this.apiUrl = process.env.TIMELINE_API_URL + '/timeline'
+    }
+    getAll() {
+        return axios.get(this.apiUrl);
+    }
+
+    createTimeline(data) {
+        return axios.post(this.apiUrl, data)
     }
 }
 

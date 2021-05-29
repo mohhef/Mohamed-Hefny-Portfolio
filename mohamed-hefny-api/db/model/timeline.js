@@ -11,7 +11,9 @@ const timelineSchema = new Schema({
     buttonText: {type: String},
     type: {type: String},
     startDate:{type: Date},
-    endDate: {type: Date}
+    endDate: {type: Date},
+    userId: {type: String, required: true},
+    createdAt: {type: Date, default: Date.now}
 })
 
 module.exports = mongoose.model('Timeline', timelineSchema);

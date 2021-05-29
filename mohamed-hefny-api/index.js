@@ -3,6 +3,7 @@ const server = express();
 
 async function runServer() {
     await require('./db').connect();
+    server.use(express.json());
     server.use('/api/v1/timeline', require('./routes/timeline'))
 
     const PORT = parseInt(process.env.port) || 3001;

@@ -2,7 +2,6 @@ import  icon  from "./icon"
 import {
     VerticalTimeline, VerticalTimelineElement
 } from "react-vertical-timeline-component"
-import 'react-vertical-timeline-component/style.min.css';
 import styles from '@/styles/pages/history/timelineelement.module.scss'
 
 const Timeline = ({ timeline }) => {

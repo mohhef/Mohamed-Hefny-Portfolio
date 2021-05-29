@@ -10,7 +10,8 @@ const data = {
             buttonText: 'clickMe',
             type: 'school',
             startDate: '01/01/2014',
-            endDate: '01/01/2016'
+            endDate: '01/01/2016',
+            userId: 'google-oauth2|106772989277922933463'
         },
         {
             title: 'Job in Siemens',
@@ -22,7 +23,8 @@ const data = {
             buttonText: 'clickMe',
             type: 'work',
             startDate: '01/01/2011',
-            endDate: '01/01/2013'
+            endDate: '01/01/2013',
+            userId: 'google-oauth2|106772989277922933463'
         },
         {
             title: 'Work in USA',
@@ -34,7 +36,8 @@ const data = {
             buttonText: 'clickMe',
             type: 'school',
             startDate: '01/01/2010',
-            endDate: '01/01/2011'
+            endDate: '01/01/2011',
+            userId: 'google-oauth2|106772989277922933463'
         }
 
     ]
