@@ -1,17 +1,26 @@
 import BaseLayout from "@/components/layouts/BaseLayout"
 import { useUser } from '@auth0/nextjs-auth0';
+import { Button } from 'reactstrap'
 import TimelineApi from '@/lib/api/timeline'
 import BasePage from "@/components/BasePage"
-import Timeline from "../../components/TimelineElement"
+import TimelineElement from "../../components/TimelineElement"
 
 
-const History = ({ timeline }) => {
+const Timeline = ({ timeline }) => {
     const { user, isLoading } = useUser();
     debugger
     return (
         <BaseLayout user={user} isLoading={isLoading}>
             <BasePage header="Timeline" className="timeline-page">
-                <Timeline timeline={timeline} user={user}  isLoading={isLoading}/>
+                <TimelineElement timeline={timeline} user={user} >
+                    {
+                        user &&
+                        <>
+                            <Button className="mr-2" color="warning">Edit</Button>
+                            <Button color="danger">Delete</Button>
+                        </>
+                    }
+                </TimelineElement>
             </BasePage>
         </BaseLayout >
     )
@@ -26,4 +35,4 @@ export async function getStaticProps() {
     }
 }
 
-export default History;
+export default Timeline;

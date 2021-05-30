@@ -4,9 +4,8 @@ import {
     VerticalTimeline, VerticalTimelineElement
 } from "react-vertical-timeline-component"
 import {timelineElementClick} from "@/utils/timeline"
-import { useUser } from '@auth0/nextjs-auth0';
 
-const Timeline = ({ timeline, user, isLoading }) => {
+const TimelineElement = ({ timeline, user, children }) => {
     const icons = icon;
     return (
         <div>
@@ -36,6 +35,7 @@ const Timeline = ({ timeline, user, isLoading }) => {
                                 {element.location}
                             </h6>
                             <p id="description">{element.description}</p>
+                            {children}
                         </VerticalTimelineElement>
                     )
                 })
@@ -45,4 +45,4 @@ const Timeline = ({ timeline, user, isLoading }) => {
     )
 }
 
-export default Timeline;
+export default TimelineElement;

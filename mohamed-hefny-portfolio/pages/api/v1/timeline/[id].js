@@ -10,8 +10,14 @@ export default async function handleTimeline(req, res){
     }
 
     if(req.method =='PATCH'){
-        const { accessToken } = await getAccessToken(req, res);
-        const json  = await new TimelineApi(accessToken).update(req.query.id, req.body);
-        return res.json(json.data);
+        try{
+            const { accessToken } = await getAccessToken(req, res);
+            const json  = await new TimelineApi(accessToken).update(req.query.id, req.body);
+            return res.json(json.data);
+        }catch(e){
+            return res.status(e.status || 422).json(e.response.data)
+        }
+
     }
 }
+

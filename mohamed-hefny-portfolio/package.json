@@ -20,6 +20,7 @@
     "react-datepicker": "^3.8.0",
     "react-dom": "17.0.2",
     "react-hook-form": "^7.6.9",
+    "react-toastify": "^7.0.4",
     "react-typed": "^1.2.0",
     "react-vertical-timeline-component": "^3.3.3",
     "reactstrap": "^8.9.0",
