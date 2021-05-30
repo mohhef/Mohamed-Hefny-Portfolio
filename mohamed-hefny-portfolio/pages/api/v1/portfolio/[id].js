@@ -2,7 +2,6 @@ import axios from "axios"
 
 export default async (req, res) => {
   try {
-    debugger
     const axiosRes = await axios.get(`${processs.env.GITHUB_API_URL}/repositories/${req.query.id}`,
       {
         headers: {

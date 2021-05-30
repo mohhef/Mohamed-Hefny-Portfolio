@@ -16,9 +16,14 @@ class TimelineApi {
         return axios.get(this.apiUrl);
     }
 
+    getById(id){
+        return axios.get(`${this.apiUrl}/${id}`);
+    }
     createTimeline(data) {
         return axios.post(this.apiUrl, data, this.config)
     }
+
+
 }
 
 export default TimelineApi;

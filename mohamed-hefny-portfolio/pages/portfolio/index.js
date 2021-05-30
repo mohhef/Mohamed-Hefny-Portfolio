@@ -10,7 +10,6 @@ const Portfolio = () => {
     const router = useRouter();
     const { data, error, loading } = useGetPortfolio();
     const { user, isLoading } = useUser();
-
     return (
         <BaseLayout user={user} isLoading={isLoading}>
             <BasePage header="Portfolios" className="portfolio-page">

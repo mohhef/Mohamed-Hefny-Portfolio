@@ -1,7 +1,7 @@
 import useSWR from 'swr'
 import { useState } from 'react'
 
-const fetcher = (url) =>
+export const fetcher = (url) =>
     fetch(url).then(async res => {
         const result = await res.json();
         if (res.status !== 200) {
@@ -36,7 +36,6 @@ export function useApiHandler(apiCall) {
             setReqState({ error: null, data: json.data, loading: false });
         } catch (e) {
             console.log(e.response)
-            debugger
             const message = (e.response && e.response.data) || 'Ooops, something went wrong...';
             setReqState({ error: message, data: null, loading: false });
         }

@@ -6,7 +6,6 @@ const timelineSchema = new Schema({
     company: {type: String},
     website: {type: String},
     location: {type: String},
-    jobTitle: {type: String},
     description: {type: String},
     buttonText: {type: String},
     type: {type: String},

@@ -3,10 +3,11 @@ import { Row, Col } from 'reactstrap'
 import {
     VerticalTimeline, VerticalTimelineElement
 } from "react-vertical-timeline-component"
+import {timelineElementClick} from "@/utils/timeline"
+import { useUser } from '@auth0/nextjs-auth0';
 
-const Timeline = ({ timeline }) => {
+const Timeline = ({ timeline, user, isLoading }) => {
     const icons = icon;
-
     return (
         <div>
             <VerticalTimeline >
@@ -16,7 +17,7 @@ const Timeline = ({ timeline }) => {
                     const date = element.startDate + "-" + endDate
                     return (
                         <VerticalTimelineElement
-                            onTimelineElementClick={() => (window.location.href = `https://${element.website}`)}
+                            onTimelineElementClick={user && timelineElementClick(user, element._id, element.website)}
                             key={element._id}
                             dateClassName="date"
                             date={date}

@@ -2,7 +2,9 @@
 import { getSession } from '@auth0/nextjs-auth0'
 
 export const isAuthorized = (user, role) => {
-    return user[process.env.AUTH0_NAMESPACE + '/roles'].includes(role);
+    const bool =  user[process.env.AUTH0_NAMESPACE + '/roles'].includes(role);
+    return bool;
+
 }
 
 export const withAuth = (getData) => {

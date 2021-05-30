@@ -7,10 +7,11 @@ import Timeline from "../../components/TimelineElement"
 
 const History = ({ timeline }) => {
     const { user, isLoading } = useUser();
+    debugger
     return (
         <BaseLayout user={user} isLoading={isLoading}>
             <BasePage header="Timeline" className="timeline-page">
-                <Timeline timeline={timeline} />
+                <Timeline timeline={timeline} user={user}  isLoading={isLoading}/>
             </BasePage>
         </BaseLayout >
     )
