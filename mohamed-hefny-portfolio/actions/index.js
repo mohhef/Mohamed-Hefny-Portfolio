@@ -35,7 +35,6 @@ export function useApiHandler(apiCall) {
             const json = await apiCall(...data);
             setReqState({ error: null, data: json.data, loading: false });
         } catch (e) {
-            console.log(e.response)
             const message = (e.response && e.response.data) || 'Ooops, something went wrong...';
             setReqState({ error: message, data: null, loading: false });
         }

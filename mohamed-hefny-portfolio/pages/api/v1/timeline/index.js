@@ -6,7 +6,7 @@ export default async function createTimeline(req, res) {
 
     try {
         const { accessToken } = await getAccessToken(req, res);
-        const json = await new TimelineApi(accessToken).createTimeline(req.body)
+        const json = await new TimelineApi(accessToken).create(req.body)
         return res.json(json.data)
     } catch (e) {
         return res.status(e.status || 422).json(e.response.data)

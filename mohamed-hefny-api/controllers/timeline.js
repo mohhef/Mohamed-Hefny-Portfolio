@@ -15,17 +15,26 @@ exports.getTimelineById = async (req, res) => {
     }
 }
 
-exports.createTimeline = async (req,res)=>{
+exports.createTimeline = async (req, res) => {
     const data = req.body;
-    console.log(data)
     const timeline = new Timeline(data);
-    // TODO: Extract from request!
-    const userId = 'google-oauth2|106772989277922933463';
-    timeline.userId = userId
-    try{
+    timeline.userId = req.user.sub;
+    try {
         const newTimeline = await timeline.save();
         return res.json(newTimeline);
-    }catch(error){
+    } catch (error) {
+        console.log(error)
+        return res.status(422).send(error.message);
+    }
+}
+
+exports.updateTimeline = async (req, res) => {
+    const { body, params: { id } } = req;
+    try {
+        // new: true insures we get the updated value
+        const updatedTimeline = await Timeline.findOneAndUpdate({_id: id}, body,{new: true, runValidators: true});
+        return res.json(updatedTimeline);
+    } catch (error) {
         console.log(error)
         return res.status(422).send(error.message);
     }
