@@ -3,19 +3,23 @@ import BasePage from "@/components/BasePage"
 import withAuth from '@/hoc/withAuth'
 import { Row, Col } from 'reactstrap'
 import TimelineForm from "@/components/TimelineForm"
-import {createTimeline} from '@/actions/timeline'
+import {useCreateTimeline} from '@/actions/timeline'
+import Redirect from '@/components/shared/redirect'
 
 const TimelineNew = ({ user, isLoading }) => {
 
-    const _createTimeline = (data) =>{
-        createTimeline(data);
+    const [createTimeline, {data, loading, error}] = useCreateTimeline();
+    
+    if(data){
+        return <Redirect to="/timeline"/>
     }
     return (
         <BaseLayout user={user} isLoading={isLoading}>
             <BasePage header="Create Portfolio">
                 <Row>
                     <Col md="8">
-                        <TimelineForm onSubmit={_createTimeline}/>
+                        <TimelineForm onSubmit={createTimeline}/>
+                        {error && <div className="alert alert-danger mt-2">{error}</div>}
                     </Col>
                 </Row>
             </BasePage>

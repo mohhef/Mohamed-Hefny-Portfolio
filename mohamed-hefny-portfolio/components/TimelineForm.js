@@ -31,9 +31,9 @@ const TimelineForm = ({ onSubmit }) => {
             </div>
 
             <div className="form-group">
-                <label htmlFor="city">Company</label>
+                <label htmlFor="company">Company</label>
                 <input
-                    {...register("city")}
+                    {...register("company")}
                     name="company"
                     type="text"
                     className="form-control"

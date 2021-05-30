@@ -1,15 +1,15 @@
 
-import axios from 'axios';
 import TimelineApi from '@/lib/api/timeline'
+import { getAccessToken } from '@auth0/nextjs-auth0';
 
-export default async function createPortfolio(req, res) {
+export default async function createTimeline(req, res) {
 
     try {
-        const data = req.body
-        await new TimelineApi().createTimeline(data)
-        return res.json({message: 'Portfolio was created!'})
+        const { accessToken } = await getAccessToken(req, res);
+        const json = await new TimelineApi(accessToken).createTimeline(req.body)
+        return res.json(json.data)
     } catch (e) {
-        return res.status(e.status || 400).end(e.message)
+        return res.status(e.status || 422).json(e.response.data)
     }
 
 }

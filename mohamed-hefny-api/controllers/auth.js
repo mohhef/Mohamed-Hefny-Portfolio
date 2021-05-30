@@ -10,9 +10,9 @@ exports.checkJwt = jwt({
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 10,
-        jwksUri:''
+        jwksUri:'https://mohhef.us.auth0.com/.well-known/jwks.json'
     }),
-    audience:'',
-    issuer:'',
+    audience:'https://mohhef.us.auth0.com/api/v2/',
+    issuer:'https://mohhef.us.auth0.com/',
     algorithms: ['RS256']
 })

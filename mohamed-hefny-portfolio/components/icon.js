@@ -14,6 +14,7 @@ const icon = {
                 background: "#f9c74f"
             }
         }
+    
     }
 
 export default icon;

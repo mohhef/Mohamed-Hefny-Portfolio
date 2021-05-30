@@ -17,14 +17,16 @@ exports.getTimelineById = async (req, res) => {
 
 exports.createTimeline = async (req,res)=>{
     const data = req.body;
+    console.log(data)
     const timeline = new Timeline(data);
     // TODO: Extract from request!
     const userId = 'google-oauth2|106772989277922933463';
-    portfolio.userId = userId
+    timeline.userId = userId
     try{
         const newTimeline = await timeline.save();
         return res.json(newTimeline);
-    }catch{
+    }catch(error){
+        console.log(error)
         return res.status(422).send(error.message);
     }
 }

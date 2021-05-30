@@ -1,0 +1,71 @@
+.timeline-page {
+
+  a{
+    text-decoration: none;
+  }
+  .vertical-timeline-element-content {
+    background-image: linear-gradient(45deg, #4e54c8 0%, #8f94fb 100%);
+    border-radius: 5px;
+    color: white;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0s;
+    margin-bottom: 20px;
+    border: none;
+    box-shadow: none;
+
+    &:hover {
+      cursor: pointer;
+      transform: translateY(-5px);
+    }
+
+    &:hover .readMore:before {
+      background: linear-gradient(to right, #ffffff 0%, #ffffff 100%);
+    }
+  }
+
+  .vertical-timeline-element-title {
+    font-weight: bold;
+    font-size: 17px;
+  }
+
+  .vertical-timeline-element-location {
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  .vertical-timeline-element-company {
+    font-size: 15px;
+  }
+
+  .date {
+    color: rgb(201, 251, 255);
+  }
+
+  #description {
+    margin: 1.5em 0 2em 0;
+  }
+
+  .button {
+    color: #4097b7;
+    font-size: 12;
+    padding: 5px;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+
+  .timeline-button {
+    background-color: #e8dede;
+  }
+
+  .timeline-button:hover {
+    background-color: #e8dede;
+  }
+
+  @media only screen and (max-width: 2300px) {
+    .vertical-timeline-element-date {
+      display: block !important;
+      float: none !important;
+      color: rgb(44, 44, 44);
+      margin-top: 1.5em;
+    }
+  }
+}

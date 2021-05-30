@@ -1,5 +1,10 @@
 import axios from 'axios'
+import { useApiHandler } from '@/actions'
 
-export function createTimeline(data){
-    return axios.post('/api/v1/portfolio',data)
-}
+const createTimeline = (data) => axios.post('/api/v1/timeline',data)
+
+export const useCreateTimeline = () => useApiHandler(createTimeline)
+
+//equivalent to export function useCreateTimeline(){
+// return useApiHandler(createPortfolio)    
+//}
