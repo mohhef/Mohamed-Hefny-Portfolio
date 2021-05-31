@@ -1,6 +1,7 @@
 import { useUser } from '@auth0/nextjs-auth0';
 import Redirect from '@/components/shared/redirect'
 import { isAuthorized } from '../utils/auth0';
+import { toast } from 'react-toastify';
 
 const withAuth = (Component) => {
     return (role) => {
@@ -11,6 +12,7 @@ const withAuth = (Component) => {
             }
 
             if (!user) {
+                toast.error("Make sure you are logged in!", { autoClose: 2000 })
                 return <Redirect ssr to="/api/auth/login" />
             } else {
                 if (role && !isAuthorized(user,role)) {

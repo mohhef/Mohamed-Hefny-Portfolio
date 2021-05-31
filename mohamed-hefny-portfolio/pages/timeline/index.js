@@ -59,7 +59,8 @@ export async function getStaticProps() {
     const json = await new TimelineApi().getAll();
     const timeline = json.data;
     return {
-        props: { timeline }
+        props: { timeline },
+        revalidate: 10, // In seconds
     }
 }
 
