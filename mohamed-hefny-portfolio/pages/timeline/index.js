@@ -6,20 +6,31 @@ import { isAuthorized } from '@/utils/auth0'
 import BasePage from "@/components/BasePage"
 import TimelineElement from "../../components/TimelineElement"
 import { VerticalTimeline } from "react-vertical-timeline-component"
+import { useDeleteTimeline } from '@/actions/timeline';
 import { useRouter } from "next/router"
+import { useState } from "react"
 
-
-const Timeline = ({ timeline }) => {
+const Timeline = ({ timeline: initialTimeline }) => {
     const { user, isLoading } = useUser();
+    const [deleteTimeline, { data, error }] = useDeleteTimeline();
     const router = useRouter();
-    debugger
+    const [timeline, setTimeline] = useState(initialTimeline);
+    const _deleteTimeline = async (e, timelineId) => {
+        e.stopPropagation();
+        const isConfirm = confirm("Are you sure you want to delete this timeline");
+        if (isConfirm) {
+            await deleteTimeline(timelineId)
+            setTimeline(timeline.filter((t) => t._id != timelineId));
+        }
+    }
+
     return (
         <BaseLayout user={user} isLoading={isLoading}>
             <BasePage header="Timeline" className="timeline-page">
                 <VerticalTimeline >
                     {timeline.map(element => {
                         return (
-                            <TimelineElement element={element} user={user} >
+                            <TimelineElement element={element} user={user} key={element._id}>
                                 {
                                     user && isAuthorized(user, "admin") &&
                                     <>
@@ -29,7 +40,9 @@ const Timeline = ({ timeline }) => {
                                                 router.push('/timeline/[id]/edit', `/timeline/${element._id}/edit`)
                                             }}
                                             className="mr-2" color="warning">Edit</Button>
-                                        <Button color="danger">Delete</Button>
+                                        <Button
+                                            onClick={(e) => _deleteTimeline(e, element._id)}
+                                            color="danger">Delete</Button>
                                     </>
                                 }
                             </TimelineElement>

@@ -28,6 +28,9 @@ class TimelineApi {
         return axios.patch(`${this.apiUrl}/${id}`, data, this.config)
     }
 
+    delete(id){
+        return axios.delete(`${this.apiUrl}/${id}`,this.config)
+    }
 
 }
 
