@@ -21,6 +21,8 @@ const BasePage = props => {
                 <meta property="og:image" key="og:image" content={`${process.env.BASE_URL}/images/section-1.png}`} />
                 <meta property="og:description" key="og:desciption" content={metaDescription} />
                 <link rel="canonical" href={`${process.env.BASE_URL}${canonicalPath ? canonicalPath : router.asPath}`} />
+                <link rel="icon" type="image/x-icon" href = "/images/favicon.ico"/>
+                <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel = "stylesheet"/>
             </Head>
             <div className={`${pageType} ${className}`}>
                 <Container>
