@@ -6,7 +6,7 @@ const CV = () => {
     const { user, error, isLoading } = useUser();
     return (
         <BaseLayout user = {user} isLoading = {isLoading}>
-            <BasePage>
+            <BasePage title = "My experience- Mohamed Hefny">
             </BasePage>
         </BaseLayout >
     )

@@ -19,6 +19,7 @@
     "react-datepicker": "^3.8.0",
     "react-dom": "17.0.2",
     "react-hook-form": "^7.6.9",
+    "react-resize-detector": "^6.7.2",
     "react-toastify": "^7.0.4",
     "react-typed": "^1.2.0",
     "react-vertical-timeline-component": "^3.3.3",

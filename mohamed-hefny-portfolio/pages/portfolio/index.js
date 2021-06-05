@@ -12,7 +12,7 @@ const Portfolio = () => {
     const { user, isLoading } = useUser();
     return (
         <BaseLayout user={user} isLoading={isLoading}>
-            <BasePage header="Portfolios" className="portfolio-page">
+            <BasePage title = "Newest Portolio" header="Portfolios" className="portfolio-page">
                 {
                     loading && <p>Loading data...</p>
                 }
@@ -21,9 +21,9 @@ const Portfolio = () => {
                         data.map(portfolio =>
                             <Col
                                 key={portfolio.id}
-                                onClick={() => {
-                                    router.push('/portfolio/[id]', `/portfolio/${portfolio.id}`)
-                                }}
+                                // onClick={() => {
+                                //     router.push('/portfolio/[id]', `/portfolio/${portfolio.id}`)
+                                // }}
                                 md="4">
                                 <PortfolioCard portfolio={portfolio} />
                             </Col>

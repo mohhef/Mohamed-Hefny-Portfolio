@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { isAuthorized } from '@/utils/auth0';
 import ReactResizeDetector from 'react-resize-detector'
+import ActiveLink from 'components/shared/ActiveLink'
 
 import {
     Collapse,
@@ -21,9 +22,9 @@ import {
 const BsNavLink = props => {
     const { href, title, className = '' } = props;
     return (
-        <Link href={href}>
+        <ActiveLink activeClassName="active" href={href}>
             <a className={`nav-link port-navbar-link ${className}`}>{title}</a>
-        </Link>
+        </ActiveLink>
     )
 }
 
@@ -58,13 +59,13 @@ const AdminMenu = () => {
                         href="/timeline/new"
                         title="Create Timeline" />
                 </DropdownItem>
-                <DropdownItem>
+                {/* <DropdownItem>
                     <BsNavLink
                         className="port-dropdown-item"
                         href="/blog/editor"
                         title="Blog Editor"
                     />
-                </DropdownItem>
+                </DropdownItem> */}
                 <DropdownItem>
                     <BsNavLink
                         className="port-dropdown-item"
@@ -85,7 +86,7 @@ const Header = ({ user, isLoading, className }) => {
         <ReactResizeDetector handleWidth>
             {({ width }) =>
                 <Navbar
-                    className={`port-navbar port-default absolute ${className} ${width < 768 && isopen ? 'is-open' : 'is-close'}`}
+                    className={`port-navbar port-default absolute ${className} ${width < 768 && isOpen ? 'is-open' : 'is-close'}`}
                     dark
                     expand="md">
                     <div className="navbar-brand">
@@ -105,9 +106,9 @@ const Header = ({ user, isLoading, className }) => {
                             <NavItem className="port-navbar-item">
                                 <BsNavLink href="/timeline" title="Timeline" />
                             </NavItem>
-                            <NavItem className="port-navbar-item">
+                            {/* <NavItem className="port-navbar-item">
                                 <BsNavLink href="/blog" title="Blogs" />
-                            </NavItem>
+                            </NavItem> */}
                             <NavItem className="port-navbar-item">
                                 <BsNavLink href="/cv" title="Cv" />
                             </NavItem>

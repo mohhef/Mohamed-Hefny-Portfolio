@@ -26,7 +26,7 @@ const Timeline = ({ timeline: initialTimeline }) => {
 
     return (
         <BaseLayout user={user} isLoading={isLoading}>
-            <BasePage header="Timeline" className="timeline-page">
+            <BasePage title = "My Timeline" header="Timeline" className="timeline-page">
                 <VerticalTimeline >
                     {timeline.map(element => {
                         return (
