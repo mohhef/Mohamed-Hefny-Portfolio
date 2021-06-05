@@ -12,7 +12,9 @@ const Portfolio = () => {
     const { user, isLoading } = useUser();
     return (
         <BaseLayout user={user} isLoading={isLoading}>
-            <BasePage title = "Newest Portolio" header="Portfolios" className="portfolio-page">
+            <BasePage title="Newest Portolio"
+                header="Portfolios"
+                className="portfolio-page">
                 {
                     loading && <p>Loading data...</p>
                 }
