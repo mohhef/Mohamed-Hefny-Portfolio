@@ -5,7 +5,7 @@ import { Row, Col } from 'reactstrap'
 import { toast } from 'react-toastify';
 import TimelineForm from "@/components/TimelineForm"
 import {useCreateTimeline} from '@/actions/timeline'
-import Redirect from '@/components/shared/redirect'
+import Redirect from '@/components/shared/Redirect'
 
 const TimelineNew = ({ user, isLoading }) => {
 
