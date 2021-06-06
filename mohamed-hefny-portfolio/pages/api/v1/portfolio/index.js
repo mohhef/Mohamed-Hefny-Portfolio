@@ -8,7 +8,8 @@ export default async (req, res) => {
           'Authorization': `token ${process.env.GITHUB_ACCESS_TOKEN}`
         },
         params: {
-          state: 'close'
+          state: 'close',
+          sort: 'updated'
         }
       });
     const posts = axiosRes.data;
