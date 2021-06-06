@@ -1,5 +1,5 @@
 import { useUser } from '@auth0/nextjs-auth0';
-import Redirect from '@/components/shared/redirect'
+import Redirect from '@/components/shared/Redirect'
 import { isAuthorized } from '../utils/auth0';
 import { toast } from 'react-toastify';
 
