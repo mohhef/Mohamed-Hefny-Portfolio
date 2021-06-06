@@ -109,9 +109,9 @@ const Header = ({ user, isLoading, className }) => {
                             {/* <NavItem className="port-navbar-item">
                                 <BsNavLink href="/blog" title="Blogs" />
                             </NavItem> */}
-                            <NavItem className="port-navbar-item">
+                            {/* <NavItem className="port-navbar-item">
                                 <BsNavLink href="/cv" title="Cv" />
-                            </NavItem>
+                            </NavItem> */}
                             {/* <NavItem className="port-navbar-item">
                             <BsNavLink href="/secret" title="Secret" />
                         </NavItem>
