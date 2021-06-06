@@ -22,7 +22,7 @@ const Index = () => {
     flipInterval.current = setInterval(() => {
       //this callback has access to the current flipping value
       setIsFlipping((prevFlipping) => !prevFlipping);
-    }, 5000)
+    }, 500000)
   }
 
   return (
@@ -42,25 +42,27 @@ const Index = () => {
                 <div className="hero-section">
                   <div className={`flipper ${isFlipping ? 'isFlipping' : ''}`}>
                     <div className="front">
-                      <div className="hero-section-content">
-                        <h2> Software Developer </h2>
-                        <div className="hero-section-content-intro">
-                          Have a look at my portfolio and job history.
+                      <div className="image image-1">
+                        <div className="hero-section-content">
+                          <h2> Software Developer </h2>
+                          <div className="hero-section-content-intro">
+                            Have a look at my portfolio and job history.
+                        </div>
                         </div>
                       </div>
-                      <img className="image" src="/images/section-1.png" />
                       <div className="shadow-custom">
                         <div className="shadow-inner"> </div>
                       </div>
                     </div>
                     <div className="back">
-                      <div className="hero-section-content">
-                        <h2> Software Developer </h2>
-                        <div className="hero-section-content-intro">
-                          Have a look at my portfolio and job history.
+                      <div className="image image-2">
+                        <div className="hero-section-content">
+                          <h2> Software Developer </h2>
+                          <div className="hero-section-content-intro">
+                            Software Developer ready to take on projects!
+                        </div>
                         </div>
                       </div>
-                      <img className="image" src="/images/section-2.png" />
                       <div className="shadow-custom shadow-custom-orange">
                         <div className="shadow-inner"> </div>
                       </div>

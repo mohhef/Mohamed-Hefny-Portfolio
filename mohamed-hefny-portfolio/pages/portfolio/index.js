@@ -13,7 +13,6 @@ const Portfolio = () => {
     return (
         <BaseLayout user={user} isLoading={isLoading}>
             <BasePage title="Newest Portolio"
-                header="Portfolios"
                 className="portfolio-page">
                 {
                     loading && <p>Loading data...</p>

@@ -3,13 +3,14 @@ import { Row, Col } from 'reactstrap'
 import {
     VerticalTimelineElement
 } from "react-vertical-timeline-component"
+import {formatDate} from "@/helper/functions"
 import { timelineElementClick } from "@/utils/timeline"
 
 const TimelineElement = ({ element, user, children }) => {
     const icons = icon;
     const IconComp = icons[element?.type]?.iconName
-    const endDate = element.endDate ? element.endDate : "current"
-    const date = element.startDate + "-" + endDate
+    const endDate = element.endDate ? formatDate(element.endDate) : "current"
+    const date = formatDate(element.startDate) + "-" + endDate
     return (
         <VerticalTimelineElement
             onTimelineElementClick={() => (window.location.href = `https://${element.website}`)}
