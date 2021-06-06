@@ -6,7 +6,7 @@ import { useUser } from '@auth0/nextjs-auth0';
 import Typed from 'react-typed';
 import React from 'react';
 
-const roles = ["Passionate Developer", "Enthusiastic learner", "Team Player", "Spring | React JS | Next JS", "MongoDb | Neo4j | Mysql", "Docker | Openshift | Kuburnetess", "Jenkins | Gitlab"]
+const roles = ["Passionate Developer", "Enthusiastic learner", "Spring | React JS | Next JS", "MongoDb | Neo4j | Mysql", "Docker | Openshift | Kuburnetess", "Jenkins | Gitlab"]
 const Index = () => {
   const [isFlipping, setIsFlipping] = useState(false);
   const { user, error, isLoading } = useUser();
