@@ -5,18 +5,18 @@ import DatePicker from "react-datepicker"
 const TimelineForm = ({ onSubmit, initialData = {} }) => {
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
-    const { register, handleSubmit, setValue } = useForm({defaultValues: initialData});
+    const { register, handleSubmit, setValue } = useForm({ defaultValues: initialData });
 
     useEffect(() => {
         register('startDate');
         register('endDate');
     }, [register])
 
-    useEffect(()=>{
-        const {startDate, endDate} = initialData;
-        if(startDate) {setStartDate(new Date(startDate))}
-        if(endDate) {setEndDate(new Date(endDate))}
-    },[initialData])
+    useEffect(() => {
+        const { startDate, endDate } = initialData;
+        if (startDate) { setStartDate(new Date(startDate)) }
+        if (endDate) { setEndDate(new Date(endDate)) }
+    }, [initialData])
     const handleDateChange = (dateType, setDate) => {
         return (date) => {
             setValue(dateType, date);
@@ -102,15 +102,17 @@ const TimelineForm = ({ onSubmit, initialData = {} }) => {
 
             <div className="form-group">
                 <label htmlFor="type">Type</label>
-                <input
+                <select
                     {...register("type")}
                     name="type"
                     rows="5"
-                    type="text"
-                    className="form-control"
                     id="type"
                 >
-                </input>
+                    <option value="work">Work</option>
+                    <option value="school">School</option>
+                    <option value="home">Home</option>
+                    <option value="baby">Baby</option>
+                </select>
             </div>
 
             <div className="form-group">
@@ -135,7 +137,7 @@ const TimelineForm = ({ onSubmit, initialData = {} }) => {
                     <button
                         type="button"
                         className="btn btn-danger"
-                        onClick={() => {handleDateChange('endDate',setEndDate)(null)}}>
+                        onClick={() => { handleDateChange('endDate', setEndDate)(null) }}>
                         No End Date
                 </button>
                 }
@@ -144,7 +146,7 @@ const TimelineForm = ({ onSubmit, initialData = {} }) => {
                         type="button"
                         className="btn btn-success"
                         onClick={
-                            () => {handleDateChange('endDate',setEndDate)(new Date(new Date().setHours(0,0,0,0))) }}>
+                            () => { handleDateChange('endDate', setEndDate)(new Date(new Date().setHours(0, 0, 0, 0))) }}>
                         Set End Date
                 </button>
                 }

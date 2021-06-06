@@ -22,7 +22,7 @@ const Index = () => {
     flipInterval.current = setInterval(() => {
       //this callback has access to the current flipping value
       setIsFlipping((prevFlipping) => !prevFlipping);
-    }, 500000)
+    }, 5000)
   }
 
   return (
