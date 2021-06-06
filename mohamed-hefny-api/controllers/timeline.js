@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Timeline = mongoose.model('Timeline')
 
 exports.getTimeline = async (req, res) => {
-    const timeline = await Timeline.find({});   
+    const timeline = await Timeline.find({}).sort({startDate: 'desc'});   
     console.log(timeline);
     return res.json(timeline);
 }

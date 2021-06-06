@@ -1,4 +1,4 @@
-const config = require('../config/dev')
+const config = require('../config')
 const mongoose = require('mongoose');
 const fakeDb = require('./FakeDB');
 

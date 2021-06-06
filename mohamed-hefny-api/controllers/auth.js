@@ -1,6 +1,6 @@
 const jwt = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
-const config = require('../config/dev')
+const config = require('../config')
 // Autentication middleware
 // This middleware will cehck authentication access token 
 //in authorization headers of a request
