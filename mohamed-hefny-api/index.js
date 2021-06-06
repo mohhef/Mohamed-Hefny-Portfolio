@@ -6,7 +6,7 @@ async function runServer() {
     server.use(express.json());
     server.use('/api/v1/timeline', require('./routes/timeline'))
 
-    const PORT = parseInt(process.env.port) || 3001;
+    const PORT = parseInt(process.env.PORT) || 3001;
     server.listen(PORT, (err) => {
         if (err) console.log(err);
         else {
