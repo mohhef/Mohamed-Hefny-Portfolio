@@ -32,17 +32,14 @@ const About = () => {
                     </Col>
                     <Col md="6">
                         <div className={`right-side ${createFadeInClass()}`}>
-                            <p>My name is Mohamed Hefny and I am an enthusiastic software engineer. </p>
-                            <p>
-                                I have a bachelor's degree in software engineering and several internships of experience working
-                                on a wide range of technologies and projects from Java(Spring) development for a streaming app to
-                                modern mobile and web applications in React, building AI projects using python and even building a board game in C++!
-              </p>
-                            <p>
-                                Throughout my career, I have acquired advanced technical knowledge and the ability to explain
-                                programming topics clearly and in detail to a broad audience. I have a keen interest in being
-                                up to date with the latest technologies used to improve a developer's experience.
-              </p>
+                            <p>My name is Mohamed Hefny, and I am an enthusiastic software engineer with a strong foundation in various technologies. I hold a bachelor's degree in software engineering and have gained extensive experience through internships and professional roles.</p>
+                            <p>Currently, I work as a Software Developer II at Amazon Web Services, where I focus on enhancing the CloudFormation service and improving customer experiences.
+                                Previously, I worked at Morgan Stanley, where I developed APIs and collaborated with cross-functional teams to create solutions for financial clients.
+                            </p> 
+                             <p>In addition to my technical skills in Java, Kotlin, Python, and various AWS services,
+                                 I am passionate about staying up to date with the latest technologies in software development. 
+                                 I am also a large language model (LLM) enthusiast and have completed the Machine Learning Specialization offered by Stanford on Coursera.
+                            </p>
                         </div>
                     </Col>
                 </Row>
