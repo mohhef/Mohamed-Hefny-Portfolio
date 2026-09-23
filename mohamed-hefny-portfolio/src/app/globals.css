@@ -931,6 +931,27 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   margin-left: auto;
 }
 
+.cv-link {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+  font: 11px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  color: var(--fg-2);
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.cv-link:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
 .state,
 .conditions {
   display: inline-flex;

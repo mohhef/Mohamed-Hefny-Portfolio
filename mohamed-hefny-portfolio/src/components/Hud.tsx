@@ -85,6 +85,9 @@ export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
           ))}
         </nav>
         <div className="hud-right">
+          <a className="cv-link" href="/cv" title="Plain-text CV">
+            CV
+          </a>
           <span className="state" ref={state} data-state="INITIALIZING" role="status" aria-live="off">
             <i aria-hidden="true" />
             <span ref={stateText}>INITIALIZING</span>
