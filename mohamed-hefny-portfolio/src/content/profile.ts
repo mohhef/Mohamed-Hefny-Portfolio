@@ -6,7 +6,7 @@ export const profile = {
   description:
     "Mohamed Hefny is a software engineer at Microsoft and a graduate student at Simon Fraser University researching visual SLAM and 3D Gaussian splatting, previously at AWS (CloudFormation) and Morgan Stanley.",
   about: [
-    "I'm a software engineer at Microsoft and a graduate student at Simon Fraser University, finishing in fall 2026. At SFU I research visual SLAM and 3D Gaussian splatting: helping a single moving camera work out where it is while it rebuilds the world around it in 3D.",
+    "I'm a software engineer at Microsoft and a graduate student at Simon Fraser University, finishing in fall 2026. At SFU I research visual SLAM and 3D Gaussian splatting.",
     "Before Microsoft I built backend services and APIs at Intact and Morgan Stanley, then worked on AWS CloudFormation, Amazon's infrastructure-as-code service. I studied software engineering at Concordia University in Montreal.",
   ],
   /** Rendered as an OpenCV-style calibration file. */
