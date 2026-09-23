@@ -26,7 +26,7 @@ export const profile = {
     // LinkedIn is hibernated for now; set `enabled: false` to hide it until it's back.
     { label: "LinkedIn", handle: "in/mohhef", href: "https://www.linkedin.com/in/mohhef", enabled: true },
   ],
-  site: "https://mohamedhefny.vercel.app",
+  site: "https://www.mohhef.com",
   repo: "https://github.com/mohhef/Mohamed-Hefny-Portfolio",
 };
 
