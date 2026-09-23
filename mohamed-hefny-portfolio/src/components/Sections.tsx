@@ -248,7 +248,7 @@ export function LoopClosure() {
     <section className="shot shot--loop" id="contact" data-shot="loop" data-nav="contact" aria-labelledby="contact-title">
       <div className="panel">
         <p className="eyebrow">
-          <span className="eyebrow-index">05</span> Loop closure
+          <span className="eyebrow-index">05</span> Loop closure · Contact
         </p>
         <h2 id="contact-title">Close the loop.</h2>
         <p className="lead">

@@ -924,6 +924,10 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   transform: scaleX(1);
 }
 
+.nav-hint {
+  color: var(--kf);
+}
+
 .hud-right {
   display: flex;
   align-items: center;

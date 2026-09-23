@@ -5,12 +5,12 @@ import type { Lighting } from "@/scene/palette";
 import type { WeatherMode } from "@/scene/weather";
 import { fmt, subscribeTelemetry } from "./telemetry";
 
-const NAV = [
+const NAV: Array<{ id: string; label: string; hint?: string }> = [
   { id: "calibration", label: "Calibration" },
   { id: "trajectory", label: "Trajectory" },
   { id: "landmarks", label: "Landmarks" },
   { id: "publications", label: "Publications" },
-  { id: "contact", label: "Loop closure" },
+  { id: "contact", label: "Loop closure", hint: "Contact" },
 ];
 
 const WEATHER: Array<{ mode: WeatherMode; label: string; icon: ReactNode }> = [
@@ -81,6 +81,7 @@ export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
           {NAV.map((n) => (
             <a key={n.id} href={`#${n.id}`} data-for={n.id}>
               {n.label}
+              {n.hint && <span className="nav-hint"> · {n.hint}</span>}
             </a>
           ))}
         </nav>
