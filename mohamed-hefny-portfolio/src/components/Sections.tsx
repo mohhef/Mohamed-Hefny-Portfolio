@@ -7,7 +7,6 @@ import { MapStats, TrainingReadout } from "./LiveReadouts";
 const NUMBER_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const host = (url: string) => new URL(url).hostname.replace(/^www\./, "");
 
 export function Hero() {
   return (
@@ -271,8 +270,7 @@ export function LoopClosure() {
         </ul>
         <MapStats />
         <p className="colophon">
-          Built with Next.js and three.js: Gaussian splats, point clouds and a pose graph, all rendered in your browser.{" "}
-          <a href="/cv">Plain-text CV</a> · <a href={profile.repo} target="_blank" rel="noreferrer">Source ({host(profile.repo)})</a>
+          Built with Next.js and three.js: Gaussian splats, point clouds and a pose graph, all rendered in your browser.
         </p>
       </div>
     </section>
