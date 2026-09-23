@@ -257,6 +257,37 @@ const shapes: Record<LandmarkShape, (s: PointSet, r: Rng) => void> = {
     pedestal(s, 2.4, r);
   },
 
+  // Pollution Lens: facility smokestacks feeding Sankey ribbons into air, water and land.
+  sankey(s, r) {
+    const smooth = (t: number) => t * t * (3 - 2 * t);
+    const stacks: Array<[number, number]> = [
+      [-0.55, 1.5],
+      [0, 2.2],
+      [0.55, 1.1],
+    ];
+    const sinks = [3.1, 1.9, 0.7];
+    stacks.forEach(([z, h], i) => {
+      for (let k = 0; k < 90; k++) put(s, [-2 + r.range(-0.12, 0.12), r.next() * h, z + r.range(-0.12, 0.12)], 0);
+      blob(s, [-2, h + 0.35, z], 0.16, 40, 0, r);
+      sinks.forEach((y1, j) => {
+        const width = 0.06 + ((i + j * 2) % 3) * 0.05;
+        const y0 = h - 0.2 - j * 0.28;
+        const z1 = (j - 1) * 0.3;
+        for (let n = 0; n < 150; n++) {
+          const t = r.next();
+          const e = smooth(t);
+          put(
+            s,
+            [-2 + t * 3.8, y0 + (y1 - y0) * e + r.range(-width, width), z + (z1 - z) * e + r.gauss() * 0.02],
+            1,
+          );
+        }
+      });
+    });
+    sinks.forEach((y) => segment(s, [1.8, y - 0.35, 0], [1.8, y + 0.35, 0], 60, 1, r, 0.02));
+    pedestal(s, 2.4, r);
+  },
+
   // This site: a miniature of the loop you're driving around.
   miniloop(s, r) {
     for (let i = 0; i < 520; i++) {

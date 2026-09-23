@@ -12,6 +12,7 @@ export type LandmarkShape =
   | "board"
   | "floors"
   | "storm"
+  | "sankey"
   | "miniloop";
 
 export interface Project {
@@ -36,6 +37,18 @@ export const projects: Project[] = [
       "Stress-tests visual SLAM two ways: degrade what the camera sees (fog, rain, night, a cracked lens) or the machine it runs on (CPU, memory and GPU caps, frame deadlines), across fourteen SLAM backends. IROS 2026.",
     url: "https://github.com/sfu-rsl/SLAMAdversarialLab",
     shape: "storm",
+    anchor: "sfu",
+  },
+  {
+    id: "pollution-lens",
+    name: "Pollution Lens Canada",
+    year: "2026",
+    stack: ["React", "D3", "Canvas", "Python"],
+    summary:
+      "Interactive map of Canada's 2024 National Pollutant Release Inventory: 59,000 facility records traced from province to sector to where the pollution ends up, as glow maps and Sankey flows. SFU visualization course project.",
+    url: "https://github.com/mohhef/pollution-lens-canada",
+    team: "group project",
+    shape: "sankey",
     anchor: "sfu",
   },
   {
