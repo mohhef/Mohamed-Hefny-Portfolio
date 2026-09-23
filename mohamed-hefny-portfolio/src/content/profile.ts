@@ -23,8 +23,13 @@ export const profile = {
   links: [
     { label: "GitHub", handle: "github.com/mohhef", href: "https://github.com/mohhef" },
     { label: "Scholar", handle: "Google Scholar", href: "https://scholar.google.com/citations?user=1x5bcncAAAAJ&hl=en" },
-    // LinkedIn is hibernated for now; set `enabled: false` to hide it until it's back.
-    { label: "LinkedIn", handle: "in/mohhef", href: "https://www.linkedin.com/in/mohhef", enabled: true },
+    // Set `enabled: false` to hide LinkedIn.
+    {
+      label: "LinkedIn",
+      handle: "in/mohamed-hefny",
+      href: "https://www.linkedin.com/in/mohamed-hefny-5617b994/",
+      enabled: true,
+    },
   ],
   site: "https://www.mohhef.com",
   repo: "https://github.com/mohhef/Mohamed-Hefny-Portfolio",
