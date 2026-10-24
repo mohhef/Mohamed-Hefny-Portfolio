@@ -1,0 +1,154 @@
+.page {
+  width: min(760px, 100% - 32px);
+  margin: 0 auto;
+  padding: 40px 0 96px;
+}
+
+.back {
+  margin: 0 0 56px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.back a {
+  color: var(--fg-2);
+  text-decoration: none;
+}
+
+.back a:hover {
+  color: var(--fg);
+}
+
+.header h1 {
+  font-size: clamp(52px, 9vw, 88px);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.headline {
+  margin: 16px 0 18px;
+  color: var(--fg);
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.links a {
+  color: var(--fg-2);
+  text-underline-offset: 3px;
+}
+
+.section {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-2);
+}
+
+.section h2 {
+  margin: 0 0 22px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.section h3 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  line-height: 1.12;
+}
+
+.section h3 span {
+  font-style: italic;
+  color: var(--fg-2);
+}
+
+.section h3 a {
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 4px;
+}
+
+.facts {
+  display: grid;
+  gap: 6px;
+  margin: 24px 0 0;
+  font-size: 14.5px;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+}
+
+.facts dt {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--fg-3);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--fg);
+}
+
+.timeline,
+.projects {
+  display: grid;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline p,
+.projects p {
+  margin-bottom: 6px;
+}
+
+.when {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+
+.skills {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.also {
+  margin-top: 28px;
+  font-size: 14px;
+}
+
+.also a {
+  color: var(--fg);
+}
+
+@media print {
+  .back {
+    display: none;
+  }
+
+  .page {
+    padding-top: 0;
+  }
+}
