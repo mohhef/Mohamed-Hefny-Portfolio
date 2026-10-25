@@ -44,7 +44,7 @@ export const publications: Publication[] = [
     id: "power-law-dp",
     title: "Estimating Power-Law Exponent with Edge Differential Privacy",
     authors: ["Adam Tan", "Mohamed Hefny", "Keval Vora"],
-    venue: "SecureDB @ SIGMOD 2026",
+    venue: "SeQureDB @ SIGMOD 2026",
     accepted: true,
     year: 2026,
     summary:
