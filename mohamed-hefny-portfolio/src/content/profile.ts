@@ -16,7 +16,7 @@ export const profile = {
     ["studying", "Graduate student, SFU (fall 2025 – fall 2026)"],
     ["current", "Senior Software Engineer, Microsoft (since Feb 2025)"],
     ["previous", "AWS CloudFormation · Morgan Stanley · Intact"],
-    ["research", "visual SLAM · 3D Gaussian splatting"],
+    ["research", "visual SLAM"],
   ] as const,
   email: "mohhef@gmail.com",
   links: [
