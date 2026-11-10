@@ -2,12 +2,22 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { PickTarget, SlamEngine } from "@/scene/engine";
-import type { WeatherMode } from "@/scene/weather";
 import { projects } from "@/content/projects";
 import { Hud } from "./Hud";
 import { Minimap } from "./Minimap";
-import { emitTelemetry } from "./telemetry";
-import { getLighting, getServerLighting, setLighting, subscribeLighting } from "./lighting";
+import { capOf, getCap, getServerCap, subscribeCap } from "./compute";
+import { getConditions, getServerConditions, subscribeConditions, watchConditions } from "./conditions";
+import { isExploring, setExploring, subscribeExplore } from "./explore";
+import { savePicture } from "./picture";
+import { playCue, setSound, setSoundWeather } from "./sound";
+import { emitEngineEvent, emitTelemetry, subscribeEngineEvents, subscribeTelemetry } from "./telemetry";
+
+/** Phones can look around by tilting: needs an orientation sensor, and a visitor who is fine with motion. */
+const noSubscription = () => () => {};
+const canTiltNow = () =>
+  "DeviceOrientationEvent" in window &&
+  window.matchMedia("(pointer: coarse)").matches &&
+  !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Maps scroll position to a continuous shot index: the camera sits on shot i while section i is centred. */
 function createScrollMap() {
@@ -57,14 +67,26 @@ export function MapViewer() {
   const reticleLabelRef = useRef<HTMLElement>(null);
   const reticleSubRef = useRef<HTMLElement>(null);
   const engineRef = useRef<SlamEngine | null>(null);
-  const [weather, setWeather] = useState<WeatherMode>("clear");
-  const lighting = useSyncExternalStore(subscribeLighting, getLighting, getServerLighting);
+  const { weather, lighting } = useSyncExternalStore(subscribeConditions, getConditions, getServerConditions);
+  const cap = useSyncExternalStore(subscribeCap, getCap, getServerCap);
+  const canTilt = useSyncExternalStore(noSubscription, canTiltNow, () => false);
+  const [tiltOn, setTiltOn] = useState(false);
+  const exploring = useSyncExternalStore(subscribeExplore, isExploring, () => false);
+  const exploringRef = useRef(false);
+  const exploreBarRef = useRef<HTMLDivElement>(null);
   const weatherRef = useRef(weather);
   const lightingRef = useRef(lighting);
+  const capRef = useRef(cap);
+
+  useEffect(() => {
+    capRef.current = cap;
+    engineRef.current?.setSqueeze(capOf(cap).squeeze);
+  }, [cap]);
 
   useEffect(() => {
     weatherRef.current = weather;
     engineRef.current?.setWeather(weather);
+    setSoundWeather(weather);
     document.documentElement.dataset.weather = weather;
   }, [weather]);
 
@@ -72,6 +94,76 @@ export function MapViewer() {
     lightingRef.current = lighting;
     engineRef.current?.setLighting(lighting);
   }, [lighting]);
+
+  useEffect(() => watchConditions(), []);
+
+  // Explore mode: the text steps aside and the visitor takes the camera.
+  useEffect(() => {
+    exploringRef.current = exploring;
+    engineRef.current?.setExplore(exploring);
+    const root = document.documentElement;
+    if (exploring) root.dataset.explore = "on";
+    else delete root.dataset.explore;
+    document.querySelector("main")?.toggleAttribute("inert", exploring);
+    if (exploring) exploreBarRef.current?.focus({ preventScroll: true });
+  }, [exploring]);
+
+  // Sound cues, for visitors who turned sound on.
+  useEffect(() => {
+    let last: string | null = null;
+    const offTelemetry = subscribeTelemetry((t) => {
+      if (t.state === last) return;
+      if (last !== null && t.state === "LOST") playCue("lost");
+      if (last !== null && t.state === "RELOCALIZED") playCue("relocalized");
+      last = t.state;
+    });
+    const offEvents = subscribeEngineEvents((e) => playCue(e.type, e.type === "keyframe" ? e.index : 0));
+    return () => {
+      offTelemetry();
+      offEvents();
+    };
+  }, []);
+
+  // Tilt to look: the phone becomes a window onto the map.
+  useEffect(() => {
+    if (!tiltOn) return;
+    let neutral: { x: number; y: number } | null = null;
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (e.beta === null || e.gamma === null) return;
+      // Sideways and forward lean, whichever way up the phone is held.
+      const angle = screen.orientation?.angle ?? 0;
+      const [x, y] =
+        angle === 90 ? [e.beta, -e.gamma] : angle === 270 ? [-e.beta, e.gamma] : angle === 180 ? [-e.gamma, -e.beta] : [e.gamma, e.beta];
+      neutral ??= { x, y };
+      // However the phone ends up being held slowly becomes the new neutral.
+      neutral.x += (x - neutral.x) * 0.012;
+      neutral.y += (y - neutral.y) * 0.012;
+      const rad = Math.PI / 180;
+      engineRef.current?.setTilt((x - neutral.x) * rad * 1.1, (neutral.y - y) * rad * 0.7);
+    };
+    window.addEventListener("deviceorientation", onOrientation);
+    return () => {
+      window.removeEventListener("deviceorientation", onOrientation);
+      engineRef.current?.setTilt(0, 0);
+    };
+  }, [tiltOn]);
+
+  const onTilt = (on: boolean) => {
+    if (!on) {
+      setTiltOn(false);
+      return;
+    }
+    // iOS only hands out orientation data after asking, and only from a tap.
+    const sensor = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
+    if (typeof sensor.requestPermission === "function") {
+      sensor
+        .requestPermission()
+        .then((answer) => setTiltOn(answer === "granted"))
+        .catch(() => setTiltOn(false));
+    } else {
+      setTiltOn(true);
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -87,16 +179,23 @@ export function MapViewer() {
     let cancelled = false;
     let raf = 0;
 
+    // Each shot is centred in the space its own section leaves free next to the text.
     const focus = () => {
       if (!engine) return;
       const w = window.innerWidth;
-      if (w >= 900) {
-        const panel = document.querySelector<HTMLElement>(".shot .panel");
-        const right = panel ? panel.getBoundingClientRect().right : w * 0.42;
-        engine.setFocus(Math.min(0.78, (right + w) / 2 / w), 0.5);
-      } else {
-        engine.setFocus(0.5, 0.3);
+      if (w < 900) {
+        // Text sits at the bottom, so the shot aims high; less so on a phone held sideways.
+        engine.setFocus(scroll.sections.map(() => 0.5), window.innerHeight < 560 ? 0.42 : 0.3);
+        return;
       }
+      engine.setFocus(
+        scroll.sections.map((section) => {
+          const panel = section.querySelector<HTMLElement>(".panel, .hero");
+          const right = panel ? panel.getBoundingClientRect().right : w * 0.42;
+          return Math.min(0.78, (right + w) / 2 / w);
+        }),
+        0.5,
+      );
     };
 
     const onScroll = () => {
@@ -136,6 +235,7 @@ export function MapViewer() {
       const section = id ? document.getElementById(id) : null;
       if (!section) return;
       e.preventDefault();
+      setExploring(false);
       if (id === "top") window.scrollTo({ top: 0, behavior });
       else section.scrollIntoView({ behavior, block: "center" });
       history.replaceState(null, "", `#${id}`);
@@ -160,42 +260,115 @@ export function MapViewer() {
     };
 
     // The mouse over the map: detects features, locks onto targets, drags to look around.
-    let drag: { x: number; y: number; moved: number; id: number } | null = null;
+    // In explore mode the same drag orbits the free camera (right-drag or shift pans), and touch
+    // joins in: one finger orbits, two pinch to zoom and slide to pan.
+    let drag: { x: number; y: number; moved: number; id: number; pan: boolean } | null = null;
+    const touches = new Map<number, { x: number; y: number }>();
+    let pinch: { span: number; x: number; y: number } | null = null;
+    const measurePinch = () => {
+      const [a, b] = [...touches.values()];
+      return { span: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
     const onCanvasMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") return;
-      engine?.setCursor(e.clientX, e.clientY);
-      if (!drag) return;
+      const free = exploringRef.current;
+      if (e.pointerType === "mouse") {
+        engine?.setCursor(e.clientX, e.clientY);
+      } else {
+        if (!free || !touches.has(e.pointerId)) return;
+        touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pinch && touches.size >= 2) {
+          const next = measurePinch();
+          engine?.exploreZoom(pinch.span / next.span);
+          engine?.explorePan(next.x - pinch.x, next.y - pinch.y);
+          pinch = next;
+          return;
+        }
+      }
+      if (!drag || e.pointerId !== drag.id) return;
       const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
       drag.moved += Math.abs(dx) + Math.abs(dy);
       drag.x = e.clientX;
       drag.y = e.clientY;
-      engine?.dragBy(dx, dy);
+      if (!free) engine?.dragBy(dx, dy);
+      else if (drag.pan) engine?.explorePan(dx, dy);
+      else engine?.exploreRotate(dx, dy);
     };
     const onCanvasLeave = () => {
       if (!drag) engine?.clearCursor();
     };
     const onCanvasDown = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse" || e.button !== 0) return;
-      drag = { x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId };
+      const free = exploringRef.current;
+      const mouse = e.pointerType === "mouse";
+      if (mouse ? e.button !== 0 && !(free && e.button === 2) : !free) return;
       canvas.setPointerCapture(e.pointerId);
+      if (!mouse) {
+        touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (touches.size >= 2) {
+          // A second finger turns the orbit into a pinch.
+          pinch = measurePinch();
+          drag = null;
+          return;
+        }
+      }
+      drag = { x: e.clientX, y: e.clientY, moved: 0, id: e.pointerId, pan: free && (e.button === 2 || e.shiftKey) };
       engine?.beginDrag();
     };
     const onCanvasUp = (e: PointerEvent) => {
+      const wasTouch = touches.delete(e.pointerId);
+      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      if (wasTouch) {
+        pinch = null;
+        if (touches.size === 1) {
+          // One of two fingers lifted: the other carries on orbiting from where it is.
+          const [[id, p]] = [...touches];
+          drag = { x: p.x, y: p.y, moved: 99, id, pan: false };
+          return;
+        }
+        if (!touches.size && !drag) engine?.endDrag();
+      }
       if (!drag || e.pointerId !== drag.id) return;
       const click = e.type === "pointerup" && drag.moved < 6;
       drag = null;
       engine?.endDrag();
-      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      if (e.pointerType !== "mouse") return;
       if (document.elementFromPoint(e.clientX, e.clientY) !== canvas) engine?.clearCursor();
-      const target = click ? engine?.getPickTarget() : null;
+      if (!click) return;
+      if (exploringRef.current) {
+        engine?.exploreFocus();
+        return;
+      }
+      const target = engine?.getPickTarget();
       if (target) relocalize(target);
+    };
+    const onContextMenu = (e: Event) => {
+      if (exploringRef.current) e.preventDefault();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (!exploringRef.current) return;
+      e.preventDefault();
+      engine?.exploreZoom(Math.exp((e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY) * 0.0012));
     };
 
     // Arrow keys step keyframe to keyframe. Up/down still scroll through content taller than the screen.
     let keyTarget: number | null = null;
     let keyTimer = 0;
     const onKey = (e: KeyboardEvent) => {
+      if (exploringRef.current) {
+        if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+        const onControl = e.target instanceof Element && !!e.target.closest("button, a");
+        if (e.key === "Escape") setExploring(false);
+        else if (e.key === "ArrowLeft") engine?.exploreRotate(70, 0);
+        else if (e.key === "ArrowRight") engine?.exploreRotate(-70, 0);
+        else if (e.key === "ArrowUp") engine?.exploreRotate(0, 45);
+        else if (e.key === "ArrowDown") engine?.exploreRotate(0, -45);
+        else if (e.key === "+" || e.key === "=") engine?.exploreZoom(0.82);
+        else if (e.key === "-" || e.key === "_") engine?.exploreZoom(1.22);
+        // The page underneath stays where it is.
+        else if (!/^(PageUp|PageDown|Home|End)$/.test(e.key) && !(e.key === " " && !onControl)) return;
+        e.preventDefault();
+        return;
+      }
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
       const el = e.target instanceof HTMLElement ? e.target : null;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
@@ -226,6 +399,8 @@ export function MapViewer() {
     window.addEventListener("resize", relayout);
     window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("keydown", onKey);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("pointerover", onOver);
     document.addEventListener("focusin", onOver);
     document.addEventListener("click", onClick);
@@ -247,6 +422,7 @@ export function MapViewer() {
           lowPower,
           fontFamily: getComputedStyle(root).getPropertyValue("--font-sans").trim() || "sans-serif",
           onTelemetry: emitTelemetry,
+          onEvent: emitEngineEvent,
         });
       } catch (err) {
         console.warn("WebGL unavailable, showing the static page.", err);
@@ -254,6 +430,8 @@ export function MapViewer() {
         return;
       }
       engineRef.current = engine;
+      engine.setSqueeze(capOf(capRef.current).squeeze);
+      engine.setExplore(exploringRef.current);
       root.dataset.webgl = "on";
       if (process.env.NODE_ENV !== "production") (window as unknown as { __slam?: SlamEngine }).__slam = engine;
       engine.setShots(scroll.sections.map((s) => s.dataset.shot ?? ""));
@@ -278,6 +456,8 @@ export function MapViewer() {
       window.removeEventListener("resize", relayout);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("pointerover", onOver);
       document.removeEventListener("focusin", onOver);
       document.removeEventListener("click", onClick);
@@ -288,6 +468,8 @@ export function MapViewer() {
       canvas.removeEventListener("pointercancel", onCanvasUp);
       engine?.dispose();
       engineRef.current = null;
+      setExploring(false);
+      setSound(false);
     };
   }, []);
 
@@ -310,7 +492,27 @@ export function MapViewer() {
           <small ref={reticleSubRef} />
         </span>
       </div>
-      <Hud weather={weather} onWeather={setWeather} lighting={lighting} onLighting={setLighting} />
+      {exploring && (
+        <div ref={exploreBarRef} className="explore-bar" role="toolbar" aria-label="Exploring the map" tabIndex={-1}>
+          <p className="explore-hint" aria-hidden="true">
+            <span className="for-mouse">Drag to orbit · scroll to zoom · right-drag to pan · click to focus</span>
+            <span className="for-touch">Drag to orbit · pinch to zoom · two fingers to pan</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const engine = engineRef.current;
+              if (engine) savePicture(engine.snapshot());
+            }}
+          >
+            Save picture
+          </button>
+          <button type="button" className="explore-exit" onClick={() => setExploring(false)}>
+            Exit <kbd>Esc</kbd>
+          </button>
+        </div>
+      )}
+      <Hud tilt={canTilt ? tiltOn : null} onTilt={onTilt} />
       <Minimap />
     </>
   );

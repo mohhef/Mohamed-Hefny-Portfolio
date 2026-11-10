@@ -2,7 +2,9 @@ import { contactLinks, profile } from "@/content/profile";
 import { formatRange, keyframes, type Keyframe } from "@/content/timeline";
 import { projects } from "@/content/projects";
 import { publications, scholarUrl } from "@/content/publications";
+import { ExploreButton } from "./ExploreButton";
 import { MapStats, TrainingReadout } from "./LiveReadouts";
+import { PaperLab } from "./PaperLab";
 
 const NUMBER_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
 
@@ -198,7 +200,8 @@ export function Publications() {
         </p>
         <h2 id="publications-title">Published maps.</h2>
         <p className="lead">
-          A map is only useful once someone else can build on it. These come out of my graduate research at SFU.
+          A map is only useful once someone else can build on it. These come out of my graduate research at SFU, and
+          the first two can be tried on this page.
         </p>
         <ol className="pubs">
           {publications.map((p) => (
@@ -227,6 +230,7 @@ export function Publications() {
                   </a>
                 ))}
               </p>
+              {p.lab && <PaperLab kind={p.lab} />}
             </li>
           ))}
         </ol>
@@ -269,6 +273,7 @@ export function LoopClosure() {
           ))}
         </ul>
         <MapStats />
+        <ExploreButton />
         <p className="colophon">
           Built with Next.js and three.js: Gaussian splats, point clouds and a pose graph, all rendered in your browser.
         </p>

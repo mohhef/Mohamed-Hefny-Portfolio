@@ -13,6 +13,9 @@ import * as THREE from "three";
  *
  * The mouse acts as a feature detector: map points near the cursor (uCursor,
  * in NDC) are drawn as ORB-style keypoint rings.
+ *
+ * uBudget is the share of points a compute-starved tracker still manages to
+ * keep in the map: below 1, a fixed random subset drops out.
  */
 
 const vertexShader = /* glsl */ `
@@ -31,6 +34,7 @@ const vertexShader = /* glsl */ `
   uniform float uSize;
   uniform float uPixelRatio;
   uniform float uNoise;
+  uniform float uBudget;
   uniform float uFogNear;
   uniform float uFogFar;
   uniform float uStructureAlpha;
@@ -91,7 +95,10 @@ const vertexShader = /* glsl */ `
     // Words are only legible from the front; from behind they drop to a faint trace.
     vec3 toCamera = normalize(cameraPosition - (modelMatrix * vec4(p, 1.0)).xyz);
     float front = mix(1.0, mix(0.12, 1.0, smoothstep(-0.05, 0.3, dot(toCamera, uFacing))), uUseFacing * aKind);
-    vAlpha = r * fog * front * mix(uStructureAlpha, 1.0, aKind);
+    float kept = step(fract(aSeed.x * 13.37 + aSeed.y * 5.71), uBudget);
+    detected *= kept;
+    vRing = detected;
+    vAlpha = r * fog * front * kept * mix(uStructureAlpha, 1.0, aKind);
     vColor = mix(uColor, uTrackColor, tracked);
     vColor = mix(vColor, uHighlightColor, uHighlight * aKind * 0.85);
     vColor = mix(vColor, uDetectColor, detected);
@@ -127,6 +134,7 @@ export interface MapPointUniforms {
   uSize: THREE.IUniform<number>;
   uPixelRatio: THREE.IUniform<number>;
   uNoise: THREE.IUniform<number>;
+  uBudget: THREE.IUniform<number>;
   uFogNear: THREE.IUniform<number>;
   uFogFar: THREE.IUniform<number>;
   uStructureAlpha: THREE.IUniform<number>;
@@ -156,6 +164,7 @@ export function createMapPointMaterial(corridor = false): MapPointMaterial {
     uSize: { value: 1 },
     uPixelRatio: { value: 1 },
     uNoise: { value: 0 },
+    uBudget: { value: 1 },
     uFogNear: { value: 22 },
     uFogFar: { value: 110 },
     uStructureAlpha: { value: 0.5 },

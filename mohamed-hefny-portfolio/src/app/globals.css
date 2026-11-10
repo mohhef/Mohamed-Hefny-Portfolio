@@ -125,6 +125,24 @@ a {
     radial-gradient(120% 90% at 70% 45%, transparent 55%, color-mix(in srgb, var(--bg) 70%, transparent) 100%);
 }
 
+/* Fog: a veil over the map, on top of the map itself fading with distance. */
+.map-vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 100% at 68% 40%,
+    color-mix(in srgb, var(--fg) 7%, var(--bg)) 0%,
+    color-mix(in srgb, var(--fg) 13%, var(--bg)) 100%
+  );
+  opacity: 0;
+  transition: opacity 1.6s;
+}
+
+html[data-weather="fog"] .map-vignette::after {
+  opacity: 0.42;
+}
+
 html[data-webgl="off"] .map-canvas {
   display: none;
 }
@@ -749,6 +767,75 @@ html[data-section="landmarks"] .landmark-label {
   color: var(--loop);
 }
 
+/* A control on a paper's card that applies its idea to this map, with what the paper found. */
+.lab {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line-2);
+}
+
+.lab-title {
+  margin: 0 0 9px;
+  font: 10.5px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.lab-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lab-controls button {
+  padding: 5px 9px;
+  border: 1px solid var(--line-2);
+  background: none;
+  font: 11px/1.2 var(--mono);
+  letter-spacing: 0.03em;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.lab-controls button:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+.lab-controls button[aria-pressed="true"] {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.lab-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: var(--line-2);
+}
+
+.lab-finding {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--fg-2);
+}
+
+.lab-finding b {
+  margin-right: 6px;
+  font: 500 10.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kf);
+}
+
 .pub-scholar {
   margin: 20px 0 0;
   font: 12px/1 var(--mono);
@@ -820,6 +907,56 @@ html[data-section="landmarks"] .landmark-label {
   font-variant-numeric: tabular-nums;
 }
 
+.map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0 0 16px;
+}
+
+.explore-enter {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--kf);
+  background: color-mix(in srgb, var(--kf) 12%, transparent);
+  font: 11.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kf);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.explore-enter:hover:not(:disabled) {
+  background: var(--kf);
+  color: var(--on-accent);
+}
+
+.explore-enter:disabled {
+  border-color: var(--line-2);
+  background: none;
+  color: var(--fg-3);
+  cursor: default;
+}
+
+.map-actions-note {
+  flex: 1 1 180px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--fg-3);
+}
+
+html[data-webgl="off"] .map-actions {
+  display: none;
+}
+
 .colophon {
   margin: 0;
   font-size: 13px;
@@ -881,7 +1018,9 @@ html[data-section="landmarks"] .landmark-label {
 
 .hud-nav {
   display: flex;
+  flex: none;
   gap: clamp(14px, 1.8vw, 26px);
+  white-space: nowrap;
 }
 
 .hud-nav a {
@@ -1050,18 +1189,44 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   color: var(--bg);
 }
 
-.conditions svg {
+/* While live, the condition the real weather maps to is marked, not selected. */
+.conditions button[data-now="true"] {
+  color: var(--fg);
+  box-shadow: inset 0 -1px 0 var(--kf);
+}
+
+.conditions svg,
+.hud-toggles svg {
   width: 14px;
   height: 14px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.4;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.conditions button:first-child svg {
+.conditions svg .solid {
   fill: currentColor;
   stroke: none;
+}
+
+/* One button that steps through the conditions, for screens too narrow for all four. */
+.conditions .cycle {
+  display: none;
+  position: relative;
+  color: var(--fg);
+}
+
+.conditions .cycle[data-live="true"]::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--kf);
 }
 
 .conditions-sep {
@@ -1077,7 +1242,7 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 16px;
   height: var(--status-h);
   padding: 0 var(--gutter);
   border-top: 1px solid var(--line);
@@ -1106,7 +1271,7 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
 
 .hud-status-map {
   display: flex;
-  gap: 24px;
+  gap: 20px;
 }
 
 .hud-status-hint {
@@ -1114,14 +1279,108 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   letter-spacing: 0.08em;
 }
 
-@media (max-width: 1180px), (pointer: coarse) {
+/* The status bar's own controls: the only part of it that takes the pointer. */
+.hud-toggles {
+  display: flex;
+  align-self: stretch;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.hud-toggles button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.hud-toggles button:hover,
+.hud-toggles button[aria-pressed="true"] {
+  color: var(--fg);
+}
+
+.hud-toggles button[aria-pressed="true"] svg {
+  color: var(--kf);
+}
+
+@media (max-width: 1279px), (pointer: coarse) {
   .hud-status-hint {
     display: none;
   }
 
-  .hud-status-fps {
+  .hud-toggles {
     margin-left: auto;
   }
+}
+
+/* Notes under the top bar: what the conditions are doing when the map alone doesn't say. */
+.hud-notes {
+  position: fixed;
+  top: calc(var(--hud-h) + 10px);
+  right: var(--gutter);
+  z-index: 19;
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.hud-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px 8px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  margin: 0;
+  font: 10.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.hud-note span + span::before {
+  content: "· ";
+}
+
+.hud-note i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--kf);
+  animation: blink 2.4s ease-in-out infinite;
+}
+
+.hud-note--squeeze {
+  padding: 5px 5px 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--loop) 60%, transparent);
+  background: var(--panel-strong);
+  color: var(--loop);
+  pointer-events: auto;
+}
+
+.hud-note button {
+  padding: 3px 6px;
+  border: 0;
+  background: color-mix(in srgb, var(--loop) 16%, transparent);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.hud-note button:hover {
+  background: var(--loop);
+  color: var(--bg);
 }
 
 /* ------------------------------------------------------ pointer on the map */
@@ -1259,6 +1518,139 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   }
 }
 
+/* --------------------------------------------------------------- explore */
+
+/* The visitor has the camera: the page stays put underneath and everything but the map steps aside. */
+html[data-explore="on"] {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+.content,
+.minimap,
+.map-vignette {
+  transition: opacity 0.45s;
+}
+
+html[data-explore="on"] .content,
+html[data-explore="on"] .minimap {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.45s,
+    visibility 0s 0.45s;
+}
+
+html[data-explore="on"] .map-vignette {
+  opacity: 0;
+}
+
+html[data-explore="on"] .map-canvas {
+  touch-action: none;
+}
+
+html[data-explore="on"] .landmark-label {
+  pointer-events: none;
+}
+
+/* The status bar's hint describes the scripted camera, not this one. */
+html[data-explore="on"] .hud-status-hint {
+  visibility: hidden;
+}
+
+.explore-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--status-h) + 22px);
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+  border: 1px solid var(--line-2);
+  background: var(--panel-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  translate: -50% 0;
+  outline: none;
+  animation: rise 0.5s 0.25s both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: -50% 12px;
+  }
+}
+
+.explore-hint {
+  margin: 0 12px 0 10px;
+  font: 10.5px/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--fg-2);
+}
+
+.explore-bar button {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  background: none;
+  font: 11px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.explore-bar button:hover {
+  border-color: var(--fg);
+}
+
+.explore-bar .explore-exit {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.explore-bar kbd {
+  margin-left: 6px;
+  font: inherit;
+  opacity: 0.55;
+}
+
+@media (pointer: fine) {
+  .for-touch {
+    display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .for-mouse,
+  .explore-bar kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .explore-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .explore-hint {
+    width: 100%;
+    margin: 4px 0 6px;
+    text-align: center;
+    white-space: normal;
+  }
+}
+
 /* --------------------------------------------------------------- minimap */
 
 .minimap {
@@ -1384,9 +1776,22 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
 
 /* ------------------------------------------------------------ responsive */
 
-@media (max-width: 1180px) {
+/* The top bar sheds labels before it sheds the section links: only the condition in force keeps its name. */
+@media (min-width: 1236px) and (max-width: 1499px) {
+  .conditions .lighting span,
+  .conditions .seg:not([aria-pressed="true"]) span {
+    display: none;
+  }
+}
+
+@media (max-width: 1235px) {
   .hud-nav {
     display: none;
+  }
+
+  /* Leaves the lower right of the map to the camera on narrower screens. */
+  .minimap {
+    width: 148px;
   }
 }
 
@@ -1452,8 +1857,43 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
     padding: 0 7px;
   }
 
+  .conditions .seg {
+    display: none;
+  }
+
+  .conditions .cycle {
+    display: inline-flex;
+  }
+
   .hud-status .wide,
+  .hud-status-fps,
   .minimap {
+    display: none;
+  }
+
+  .hud-status {
+    gap: 12px;
+  }
+
+  .hud-status-map {
+    gap: 14px;
+  }
+
+  /* Text scrolls under the notes here, so they get a strip of their own below the top bar. */
+  .hud-notes {
+    top: var(--hud-h);
+    right: 0;
+    left: 0;
+    padding: 7px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .hud-notes:empty {
+    display: none;
+  }
+
+  .lab-sep {
     display: none;
   }
 }
@@ -1487,7 +1927,9 @@ html[data-section="contact"] .hud-nav a[data-for="contact"]::after {
   .map-vignette,
   .landmark-labels,
   .hud-top,
+  .hud-notes,
   .hud-status,
+  .map-actions,
   .minimap,
   .skip-link,
   .scroll-cue {

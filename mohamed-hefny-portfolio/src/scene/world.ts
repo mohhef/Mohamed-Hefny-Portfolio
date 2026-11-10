@@ -164,13 +164,25 @@ export interface Shot {
   anchorU?: number;
 }
 
-/** Third-person "follow camera": behind, outside and above the SLAM camera, looking at its scene slot. */
+/** What the SLAM camera at u is looking at: the middle of its scene. */
+export function gazeTarget(u: number, drift: number): V3 {
+  return sceneSlot(u, drift);
+}
+
+/**
+ * Third-person "follow camera": over the SLAM camera's shoulder, outside and
+ * above it. It aims between the camera and its scene, so the camera sits low
+ * in the frame with what it is looking at above it.
+ */
 export function followPose(u: number, drift: number, lift = 0): Pose {
   const p = estimatedPoint(u, drift);
   const t = tangent(u);
   const n = inward(u);
-  const pos = add(add(add(p, scale(t, -9.6 - lift * 0.8)), scale(n, -7.6 - lift * 0.5)), [0, 4.3 + lift, 0]);
-  const target = add(sceneSlot(u, drift), [0, -0.9 - lift * 0.2, 0]);
+  const pos = add(add(add(p, scale(t, -6.4 - lift * 0.8)), scale(n, -9.6 - lift * 0.5)), [0, 4.9 + lift, 0]);
+  const between = lerp3(p, sceneSlot(u, drift), 0.62);
+  // Vertically the frame runs from the floor under the camera to the top of the scene,
+  // so it aims lower where the path climbs further above the floor.
+  const target: V3 = [between[0], p[1] - 0.5 * loopPoint(u)[1] - 0.3 - lift * 0.1, between[2]];
   return { pos, target };
 }
 

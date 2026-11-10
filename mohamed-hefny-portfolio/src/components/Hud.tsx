@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
-import type { Lighting } from "@/scene/palette";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { PLACE } from "@/content/place";
 import type { WeatherMode } from "@/scene/weather";
+import { capOf, getCap, getServerCap, setCap, subscribeCap } from "./compute";
+import { chooseLighting, chooseWeather, getConditions, getServerConditions, goLive, subscribeConditions } from "./conditions";
+import { isSoundOn, setSound, subscribeSound } from "./sound";
 import { fmt, subscribeTelemetry } from "./telemetry";
 
 const NAV: Array<{ id: string; label: string; hint?: string }> = [
@@ -17,12 +20,17 @@ const WEATHER: Array<{ mode: WeatherMode; label: string; icon: ReactNode }> = [
   {
     mode: "clear",
     label: "Clear",
-    icon: <circle cx="8" cy="8" r="3.2" />,
+    icon: <circle cx="8" cy="8" r="3.2" className="solid" />,
   },
   {
     mode: "rain",
     label: "Rain",
     icon: <path d="M5 3.5 3.5 8M9 3.5 7.5 8M13 3.5 11.5 8M7 9 5.5 13.5M11 9 9.5 13.5" />,
+  },
+  {
+    mode: "fog",
+    label: "Fog",
+    icon: <path d="M2.5 4.8h11M4.5 8h9M2.5 11.2h8" />,
   },
   {
     mode: "snow",
@@ -31,17 +39,36 @@ const WEATHER: Array<{ mode: WeatherMode; label: string; icon: ReactNode }> = [
   },
 ];
 
+const liveIcon = (
+  <>
+    <circle cx="8" cy="8" r="1.7" className="solid" />
+    <path d="M4.7 11.3a4.7 4.7 0 0 1 0-6.6M11.3 4.7a4.7 4.7 0 0 1 0 6.6" />
+  </>
+);
+
 interface HudProps {
-  weather: WeatherMode;
-  onWeather: (mode: WeatherMode) => void;
-  lighting: Lighting;
-  onLighting: (lighting: Lighting) => void;
+  /** null where the device has no orientation sensor to offer. */
+  tilt: boolean | null;
+  onTilt: (on: boolean) => void;
 }
 
-export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
+export function Hud({ tilt, onTilt }: HudProps) {
   const state = useRef<HTMLSpanElement>(null);
   const stateText = useRef<HTMLSpanElement>(null);
   const status = useRef<HTMLDivElement>(null);
+  const conditions = useSyncExternalStore(subscribeConditions, getConditions, getServerConditions);
+  const sound = useSyncExternalStore(subscribeSound, isSoundOn, () => false);
+  const cap = useSyncExternalStore(subscribeCap, getCap, getServerCap);
+
+  const { weather, lighting, report } = conditions;
+  const live = conditions.weatherLive && conditions.lightingLive;
+  const current = WEATHER.find((w) => w.mode === weather) ?? WEATHER[0];
+  // On small screens one button steps through live and the hand-picked conditions.
+  const cycle = () => {
+    const next = live ? 0 : WEATHER.indexOf(current) + 1;
+    if (next < WEATHER.length) chooseWeather(WEATHER[next].mode);
+    else goLive();
+  };
 
   useEffect(
     () =>
@@ -94,12 +121,26 @@ export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
             <span ref={stateText}>INITIALIZING</span>
           </span>
           <div className="conditions" role="group" aria-label="Conditions">
+            <button
+              type="button"
+              className="seg live"
+              aria-pressed={live}
+              onClick={goLive}
+              title={`Live: the weather and daylight at ${PLACE.name} right now`}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                {liveIcon}
+              </svg>
+              <span>Live</span>
+            </button>
             {WEATHER.map((w) => (
               <button
                 key={w.mode}
                 type="button"
-                aria-pressed={weather === w.mode}
-                onClick={() => onWeather(w.mode)}
+                className="seg"
+                aria-pressed={!conditions.weatherLive && weather === w.mode}
+                data-now={conditions.weatherLive && weather === w.mode}
+                onClick={() => chooseWeather(w.mode)}
                 title={w.mode === "clear" ? "Clear conditions" : `${w.label}: watch tracking degrade`}
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -108,12 +149,23 @@ export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
                 <span>{w.label}</span>
               </button>
             ))}
+            <button
+              type="button"
+              className="cycle"
+              data-live={live}
+              onClick={cycle}
+              aria-label={`Conditions: ${live ? `live from ${PLACE.name}, ` : ""}${current.label.toLowerCase()}. Change`}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                {current.icon}
+              </svg>
+            </button>
             <span className="conditions-sep" aria-hidden="true" />
             <button
               type="button"
               className="lighting"
               aria-pressed={lighting === "night"}
-              onClick={() => onLighting(lighting === "night" ? "day" : "night")}
+              onClick={() => chooseLighting(lighting === "night" ? "day" : "night")}
               title={lighting === "night" ? "Switch to day" : "Switch to night"}
             >
               <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -132,8 +184,35 @@ export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
         </div>
       </header>
 
-      <div className="hud-status" ref={status} aria-hidden="true">
-        <span className="hud-status-map">
+      {/* What the controls above are currently doing, when it isn't obvious from the map. */}
+      <div className="hud-notes">
+        {conditions.weatherLive && (
+          <p className="hud-note">
+            <i aria-hidden="true" />
+            <span>Live</span>
+            <span>{PLACE.name}</span>
+            {report && <span>{Math.round(report.tempC)}°C</span>}
+            {report && (
+              <span>
+                {report.label}
+                {report.rate >= 0.1 ? ` ${report.rate.toFixed(1)} mm/h` : ""}
+              </span>
+            )}
+          </p>
+        )}
+        {cap !== "uncapped" && (
+          <p className="hud-note hud-note--squeeze">
+            <span>Processor cap</span>
+            <span>{capOf(cap).label}</span>
+            <button type="button" onClick={() => setCap("uncapped")}>
+              Lift
+            </button>
+          </p>
+        )}
+      </div>
+
+      <div className="hud-status" ref={status}>
+        <span className="hud-status-map" aria-hidden="true">
           <span>
             <b>KF</b> <em data-k="kf">0/0</em>
           </span>
@@ -151,8 +230,28 @@ export function Hud({ weather, onWeather, lighting, onLighting }: HudProps) {
             <b>DRIFT</b> <em data-k="drift">0.00</em> m
           </span>
         </span>
-        <span className="hud-status-hint">← → keyframes · drag to look · click to relocalize</span>
-        <span className="hud-status-fps">
+        <span className="hud-status-hint" aria-hidden="true">
+          ← → step · drag to look · click to relocalize
+        </span>
+        <span className="hud-toggles">
+          {tilt !== null && (
+            <button type="button" aria-pressed={tilt} onClick={() => onTilt(!tilt)} title="Tilt your phone to look around the map">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <rect x="5.2" y="2.6" width="5.6" height="10.8" rx="1.2" transform="rotate(-16 8 8)" />
+                <path d="M1.8 11.6c.8 1.5 2.1 2.4 3.7 2.6M14.2 4.4c-.8-1.5-2.1-2.4-3.7-2.6" />
+              </svg>
+              Tilt
+            </button>
+          )}
+          <button type="button" aria-pressed={sound} onClick={() => setSound(!sound)} title={sound ? "Turn sound off" : "Turn sound on"}>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2.4 6.3v3.4h2.5l3.3 2.8v-9L4.9 6.3Z" />
+              {sound ? <path d="M10.5 5.7a3.3 3.3 0 0 1 0 4.6M12.3 4a5.7 5.7 0 0 1 0 8" /> : <path d="M10.7 6.2l3 3.6M13.7 6.2l-3 3.6" />}
+            </svg>
+            Sound
+          </button>
+        </span>
+        <span className="hud-status-fps" aria-hidden="true">
           <em data-k="fps">60</em> fps
         </span>
       </div>

@@ -10,6 +10,8 @@ export interface Publication {
   year: number;
   summary: string;
   links: Array<{ label: string; href: string }>;
+  /** A control on the card that applies the paper's idea to this map (see findings.ts). */
+  lab?: "conditions" | "compute";
 }
 
 export const scholarUrl = "https://scholar.google.com/citations?user=1x5bcncAAAAJ&hl=en";
@@ -28,6 +30,7 @@ export const publications: Publication[] = [
       { label: "arXiv", href: "https://arxiv.org/abs/2603.17165" },
       { label: "Code", href: "https://github.com/sfu-rsl/SLAMAdversarialLab" },
     ],
+    lab: "conditions",
   },
   {
     id: "slam-squeeze-bench",
@@ -39,6 +42,7 @@ export const publications: Publication[] = [
     summary:
       "Benchmarks SLAM the way it actually runs on edge hardware: capped compute and memory, competing workloads and camera frame drops, across nine classical, learning-based and Gaussian-splatting systems.",
     links: [{ label: "arXiv", href: "https://arxiv.org/abs/2609.19533" }],
+    lab: "compute",
   },
   {
     id: "power-law-dp",

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-import { lightingScript } from "@/components/lighting";
+import { lightingScript } from "@/components/conditions";
 import { profile } from "@/content/profile";
 import "./globals.css";
 

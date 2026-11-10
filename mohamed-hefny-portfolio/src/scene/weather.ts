@@ -1,11 +1,12 @@
 /**
  * Rain streaks and snow flakes in a box that wraps around the camera, so the
- * precipitation is fixed in world space but never runs out.
+ * precipitation is fixed in world space but never runs out. Fog has no
+ * particles: the engine reads its level and shortens how far the map can be seen.
  */
 import * as THREE from "three";
 import { rng } from "./rng";
 
-export type WeatherMode = "clear" | "rain" | "snow";
+export type WeatherMode = "clear" | "rain" | "snow" | "fog";
 
 const rainVertex = /* glsl */ `
   attribute float aEnd;
@@ -74,6 +75,7 @@ export class Weather {
   private snow: THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>;
   private rainLevel = 0;
   private snowLevel = 0;
+  private fogLevel = 0;
   private alpha = 0.4;
   mode: WeatherMode = "clear";
 
@@ -167,13 +169,19 @@ export class Weather {
 
   /** How strongly the current weather degrades tracking, 0..1. */
   get severity() {
-    return Math.max(this.rainLevel, this.snowLevel * 0.65);
+    return Math.max(this.rainLevel, this.snowLevel * 0.65, this.fogLevel * 0.8);
+  }
+
+  /** How thick the fog is right now, 0..1. */
+  get fog() {
+    return this.fogLevel;
   }
 
   update(dt: number, time: number, center: THREE.Vector3, animate: boolean) {
     const k = 1 - Math.exp(-dt * 2.5);
     this.rainLevel += ((this.mode === "rain" ? 1 : 0) - this.rainLevel) * k;
     this.snowLevel += ((this.mode === "snow" ? 1 : 0) - this.snowLevel) * k;
+    this.fogLevel += ((this.mode === "fog" ? 1 : 0) - this.fogLevel) * (1 - Math.exp(-dt * 1.3));
     const t = animate ? time : 0;
     for (const [obj, level, a] of [
       [this.rain, this.rainLevel, this.alpha],

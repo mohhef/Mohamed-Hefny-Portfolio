@@ -65,9 +65,19 @@ export function Minimap() {
         <path ref={mapped} d={d} className="minimap-mapped" pathLength={1} strokeDasharray="1 1" strokeDashoffset={1} />
         {landmarkPlacements.map((l, i) => {
           const [x, y] = to(l.center[0], l.center[2]);
-          return <rect key={l.id} x={x - 2} y={y - 2} width={4} height={4} className="minimap-landmark" aria-label={projects[i].name} />;
+          return (
+            <rect
+              key={l.id}
+              x={(x - 2).toFixed(1)}
+              y={(y - 2).toFixed(1)}
+              width={4}
+              height={4}
+              className="minimap-landmark"
+              aria-label={projects[i].name}
+            />
+          );
         })}
-        <g className="minimap-origin" transform={`translate(${origin[0]} ${origin[1]})`}>
+        <g className="minimap-origin" transform={`translate(${origin[0].toFixed(1)} ${origin[1].toFixed(1)})`}>
           <circle r={3.2} />
         </g>
         {keyframes.map((kf, i) => {
@@ -99,12 +109,12 @@ export function Minimap() {
             </g>
           );
         })}
-        <g ref={cam} className="minimap-cam" transform={`translate(${origin[0]} ${origin[1]})`}>
+        <g ref={cam} className="minimap-cam" transform={`translate(${origin[0].toFixed(1)} ${origin[1].toFixed(1)})`}>
           <path d="M0 -7 L4.5 3 L0 1.2 L-4.5 3 Z" />
         </g>
         <g className="minimap-scale" transform={`translate(${PAD} ${H - 8})`}>
           <path d={`M0 -3V0H${tenMetres.toFixed(1)}V-3`} />
-          <text x={tenMetres + 5} y={0}>
+          <text x={(tenMetres + 5).toFixed(1)} y={0}>
             10 m
           </text>
         </g>

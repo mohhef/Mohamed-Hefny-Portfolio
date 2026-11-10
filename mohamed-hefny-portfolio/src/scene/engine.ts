@@ -5,9 +5,6 @@
  * and is corrected when the loop closes at the end of the page.
  */
 import * as THREE from "three";
-import { Line2 } from "three/addons/lines/Line2.js";
-import { LineGeometry } from "three/addons/lines/LineGeometry.js";
-import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { covisibility, keyframes } from "@/content/timeline";
 import { projects } from "@/content/projects";
 import { palettes, type Lighting, type Palette } from "./palette";
@@ -15,7 +12,8 @@ import { buildPointGeometry, createMapPointMaterial, type MapPointMaterial } fro
 import { sampleCorridor, sampleSurroundings, sampleText } from "./sampling";
 import { sampleLandmark } from "./landmarks";
 import { buildPortrait, type Portrait } from "./splats";
-import { CalibrationBoard, axesGizmo, frustumGeometry } from "./props";
+import { CalibrationBoard, Frustum, Pin, axesGizmo } from "./props";
+import { Trajectory } from "./trajectory";
 import { Weather, type WeatherMode } from "./weather";
 import { hashString, rng } from "./rng";
 import * as W from "./world";
@@ -37,6 +35,9 @@ export interface Telemetry {
   train: { iter: number; psnr: number; gaussians: number; done: boolean };
 }
 
+/** Moments the page reacts to with sound: a keyframe being taken, the reticle locking on, the loop closing. */
+export type EngineEvent = { type: "keyframe"; index: number } | { type: "lock" } | { type: "loop" };
+
 /** Something in the map the cursor can lock onto and a click can relocalize to. */
 export interface PickTarget {
   kind: "keyframe" | "landmark" | "calibration" | "origin";
@@ -46,6 +47,8 @@ export interface PickTarget {
   /** Screen position, client pixels. */
   x: number;
   y: number;
+  /** Position in the map. */
+  world: W.V3;
 }
 
 export interface EngineOptions {
@@ -55,6 +58,7 @@ export interface EngineOptions {
   lowPower: boolean;
   fontFamily: string;
   onTelemetry: (t: Telemetry) => void;
+  onEvent?: (e: EngineEvent) => void;
 }
 
 interface Anchored {
@@ -78,8 +82,8 @@ interface MapScene {
 interface KeyframeViz {
   id: string;
   u: number;
-  group: THREE.Group;
-  material: THREE.LineBasicMaterial;
+  viz: Frustum;
+  pin: Pin;
   inserted: number;
 }
 
@@ -99,7 +103,6 @@ const smoother = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
 const dwell = (f: number) => smoother(clamp((f - 0.12) / 0.76));
 const easeOutBack = (t: number) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
 const v3 = (a: W.V3) => new THREE.Vector3(a[0], a[1], a[2]);
-const TRAJECTORY_SAMPLES = 720;
 const TRAIN_SECONDS = 4.8;
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -122,6 +125,22 @@ export class SlamEngine {
   private size = { w: 1, h: 1 };
   private pixelRatio = 1;
   private focus = { x: 0.5, y: 0.5 };
+  private focusX: number[] = [];
+  private focusY = 0.5;
+  /**
+   * The free camera offered once the loop has closed: an orbit around `target`.
+   * `k` blends from the scripted shot (0) to it (1); `goal` is what input asks for.
+   */
+  private explore = {
+    on: false,
+    k: 0,
+    idle: 0,
+    target: new THREE.Vector3(),
+    radius: 90,
+    theta: 0,
+    phi: 0.95,
+    goal: { target: new THREE.Vector3(), radius: 90, theta: 0, phi: 0.95 },
+  };
   private pointer = { x: 0, y: 0, sx: 0, sy: 0 };
 
   private shots: W.Shot[] = [];
@@ -138,6 +157,14 @@ export class SlamEngine {
   private train = 0;
   private portrait?: Portrait;
   private portraitGroup = new THREE.Group();
+
+  /** How starved of compute the tracker is, 0..1: what was asked for, and eased towards it. */
+  private squeezeTarget = 0;
+  private squeeze = 0;
+  /** Where the tracker last placed the camera. With frames dropped, it lags behind u. */
+  private slamU = 0;
+  private nextFrameIn = 0;
+  private nextSqueezeLoss = 0;
 
   private lostUntil = -1;
   private wasLost = false;
@@ -156,14 +183,15 @@ export class SlamEngine {
   private boardReveal = 0;
   private gizmo = axesGizmo();
 
-  private trajectory!: Line2;
-  private trajectoryMaterial!: LineMaterial;
+  private track = new Trajectory();
   private covis!: THREE.LineSegments<THREE.BufferGeometry, THREE.LineBasicMaterial>;
   private covisEdges = covisibility();
   private loopEdge!: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
   private matches!: THREE.LineSegments<THREE.BufferGeometry, THREE.LineBasicMaterial>;
-  private currentCam = new THREE.Group();
-  private currentCamMaterial = new THREE.LineBasicMaterial({ transparent: true, depthWrite: false });
+  private currentCam = new Frustum({ w: 0.8, h: 0.54, d: 0.98, linewidth: 1.8, fill: 0.13, brackets: true, glow: 0.7 });
+  private camPin = new Pin(0.5);
+  /** 1 → 0 after a keyframe is taken: the image plane flashes and a wave leaves the pin. */
+  private shutter = 0;
   private weather: Weather;
 
   private labels = new Map<string, HTMLElement>();
@@ -173,10 +201,13 @@ export class SlamEngine {
 
   private cursor = { x: 9, y: 9, px: 0, py: 0, on: false, fade: 0 };
   private orbit = { yaw: 0, pitch: 0, dragging: false };
+  /** Look-around offset from the device's orientation (phones): target, then smoothed. */
+  private tilt = { yaw: 0, pitch: 0, sy: 0, sp: 0 };
   private spherical = new THREE.Spherical();
   private pickHover: PickTarget | null = null;
   private reticle?: { root: HTMLElement; label: HTMLElement; sub: HTMLElement };
   private reticlePos = { x: 0, y: 0, placed: false };
+  private locked: string | null = null;
   private navigatingUntil = -1;
 
   private colors = { camera: new THREE.Color(), keyframe: new THREE.Color(), highlight: new THREE.Color() };
@@ -188,6 +219,7 @@ export class SlamEngine {
   private fpsTime = 0;
   private tmp = new THREE.Vector3();
   private tmp2 = new THREE.Vector3();
+  private tmpColor = new THREE.Color();
 
   constructor(private canvas: HTMLCanvasElement, opts: EngineOptions) {
     this.opts = opts;
@@ -222,31 +254,29 @@ export class SlamEngine {
 
     // Keyframes: the origin plus one per career entry. They appear on insertion.
     const makeKf = (id: string, u: number, lookAt: THREE.Vector3): KeyframeViz => {
-      const material = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.95, depthWrite: false });
-      const group = new THREE.Group();
-      group.add(new THREE.LineSegments(frustumGeometry(0.5, 0.34, 0.62), material));
-      group.position.copy(v3(W.loopPoint(u)));
-      group.lookAt(lookAt);
-      group.scale.setScalar(0.001);
-      s.add(group);
-      this.anchor(group, u);
-      return { id, u, group, material, inserted: 0 };
+      const p = W.loopPoint(u);
+      const viz = new Frustum({ w: 0.5, h: 0.34, d: 0.62, linewidth: 1.4, fill: 0.08 });
+      viz.group.position.copy(v3(p));
+      viz.group.lookAt(lookAt);
+      viz.group.scale.setScalar(0.001);
+      const pin = new Pin(0.26);
+      pin.group.position.copy(viz.group.position);
+      pin.setHeight(p[1] - W.FLOOR_Y);
+      s.add(viz.group, pin.group);
+      this.anchor(viz.group, u);
+      this.anchor(pin.group, u);
+      return { id, u, viz, pin, inserted: 0 };
     };
     this.originKf = makeKf("origin", 0, v3(W.portrait.center));
     this.kfs = keyframes.map((kf, i) => makeKf(kf.id, W.keyframeU[i], v3(W.sceneAnchor(i).center)));
 
-    // The SLAM camera itself.
-    this.currentCam.add(new THREE.LineSegments(frustumGeometry(0.64, 0.43, 0.8), this.currentCamMaterial));
-    this.currentCam.visible = false;
-    s.add(this.currentCam);
+    // The SLAM camera itself, pinned to the floor like the keyframes it leaves behind.
+    this.currentCam.group.visible = false;
+    this.camPin.group.visible = false;
+    s.add(this.currentCam.group, this.camPin.group);
 
     // The whole trajectory is drawn up front so it's clear where the camera is heading.
-    const geometry = new LineGeometry();
-    geometry.setPositions(this.trajectoryPositions());
-    this.trajectoryMaterial = new LineMaterial({ linewidth: 2.2, transparent: true, opacity: 0.9, worldUnits: false, depthWrite: false });
-    this.trajectory = new Line2(geometry, this.trajectoryMaterial);
-    this.trajectory.frustumCulled = false;
-    s.add(this.trajectory);
+    s.add(this.track.group);
 
     // Covisibility graph between keyframes that share skills.
     const cg = new THREE.BufferGeometry();
@@ -284,15 +314,6 @@ export class SlamEngine {
     s.add(this.portraitGroup);
 
     s.add(this.weather.group);
-  }
-
-  private trajectoryPositions(): number[] {
-    const out: number[] = [];
-    for (let i = 0; i < TRAJECTORY_SAMPLES; i++) {
-      const p = W.estimatedPoint(i / (TRAJECTORY_SAMPLES - 1), this.drift);
-      out.push(p[0], p[1], p[2]);
-    }
-    return out;
   }
 
   /** Loads the portrait, then reconstructs the rest of the map in the background. */
@@ -424,10 +445,137 @@ export class SlamEngine {
     this.sTarget = s;
   }
 
-  /** Where the focus of the shot should land on screen, in 0..1 viewport units. */
-  setFocus(x: number, y: number) {
-    this.focus = { x, y };
+  /**
+   * Where the subject of each shot should land on screen, in 0..1 viewport
+   * units. x is per shot, because it depends on how wide that section's panel is.
+   */
+  setFocus(xs: number[], y: number) {
+    this.focusX = xs;
+    this.focusY = y;
+    this.updateFocus(true);
+  }
+
+  private updateFocus(force = false) {
+    const xs = this.focusX;
+    if (!xs.length) return;
+    const i = Math.max(0, Math.min(xs.length - 1, Math.floor(this.s)));
+    const j = Math.min(i + 1, xs.length - 1);
+    // The free camera has the whole screen, so its subject sits in the middle,
+    // a little high to clear the toolbar.
+    const free = smoother(this.explore.k);
+    const shot = xs[i] + (xs[j] - xs[i]) * dwell(clamp(this.s - i));
+    const x = shot + (0.5 - shot) * free;
+    const y = this.focusY + (0.46 - this.focusY) * free;
+    if (!force && Math.abs(x - this.focus.x) < 1e-4 && Math.abs(y - this.focus.y) < 1e-4) return;
+    this.focus.x = x;
+    this.focus.y = y;
     this.applyView();
+  }
+
+  /** Hands the camera to the visitor (or takes it back). Meant for once the map is complete. */
+  setExplore(on: boolean) {
+    const e = this.explore;
+    if (on === e.on) return;
+    e.on = on;
+    if (!on) return;
+    // Start from where the camera is now, then pull back until the whole loop is in view.
+    const centre = this.tmp2.set(W.LOOP.cx, 0, W.LOOP.cz);
+    this.spherical.setFromVector3(this.tmp.copy(this.camera.position).sub(centre));
+    e.target.copy(centre);
+    e.radius = this.spherical.radius;
+    e.theta = this.spherical.theta;
+    e.phi = this.spherical.phi;
+    const half = Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2);
+    e.goal.target.copy(centre);
+    // Far enough for the loop's width to fit, and its depth with room left for the toolbar.
+    e.goal.radius = clamp(Math.max((1.12 * 40) / (half * this.camera.aspect), (1.5 * 24) / half), 60, 180);
+    e.goal.theta = e.theta + 0.4;
+    e.goal.phi = 0.95;
+    e.idle = 0;
+  }
+
+  /** Free camera: orbit by a drag, in pixels. */
+  exploreRotate(dx: number, dy: number) {
+    const g = this.explore.goal;
+    g.theta -= dx * 0.005;
+    g.phi = clamp(g.phi - dy * 0.004, 0.1, 1.5);
+    this.explore.idle = 0;
+  }
+
+  /** Free camera: slide the map under the pointer, in pixels. */
+  explorePan(dx: number, dy: number) {
+    const e = this.explore;
+    const metres = (e.radius * 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2)) / this.size.h;
+    const sin = Math.sin(e.theta);
+    const cos = Math.cos(e.theta);
+    const t = e.goal.target;
+    t.x += (-cos * dx - sin * dy) * metres;
+    t.z += (sin * dx - cos * dy) * metres;
+    // Keep the map within reach.
+    const fromCentre = this.tmp.set(t.x - W.LOOP.cx, 0, t.z - W.LOOP.cz);
+    if (fromCentre.length() > 70) t.set(W.LOOP.cx, 0, W.LOOP.cz).add(fromCentre.setLength(70));
+    e.idle = 0;
+  }
+
+  /** Free camera: multiply the distance (below 1 zooms in). */
+  exploreZoom(factor: number) {
+    const g = this.explore.goal;
+    g.radius = clamp(g.radius * factor, 5, 190);
+    this.explore.idle = 0;
+  }
+
+  /** Free camera: centre on whatever the cursor is locked onto. */
+  exploreFocus() {
+    const t = this.pickHover;
+    if (!t) return;
+    const g = this.explore.goal;
+    g.target.set(t.world[0], Math.max(0, t.world[1]), t.world[2]);
+    g.radius = Math.min(g.radius, 26);
+    this.explore.idle = 0;
+  }
+
+  /** The current view without the HUD, at a resolution worth keeping. */
+  snapshot(): HTMLCanvasElement {
+    const { w, h } = this.size;
+    const gl = this.renderer;
+    const limit = Math.min(4096, gl.capabilities.maxTextureSize);
+    const scale = Math.min(limit / Math.max(w, h), Math.max(2, this.pixelRatio));
+    const width = Math.round(w * scale);
+    const height = Math.round(h * scale);
+    const points = [
+      ...this.scenes.map((x) => x.material),
+      ...this.landmarks.map((x) => x.material),
+      ...(this.corridor ? [this.corridor.material] : []),
+    ];
+    // Point sizes are in pixels of whatever is being drawn into. The cursor's
+    // keypoint rings and hover highlights stay out of the picture.
+    for (const m of points) {
+      m.uniforms.uPixelRatio.value = scale;
+      m.uniforms.uCursorOn.value = 0;
+      m.uniforms.uHighlight.value = 0;
+    }
+    this.weather.setPixelRatio(scale);
+    const target = new THREE.WebGLRenderTarget(width, height, { samples: 4 });
+    gl.setRenderTarget(target);
+    gl.render(this.scene, this.camera);
+    const pixels = new Uint8Array(width * height * 4);
+    gl.readRenderTargetPixels(target, 0, 0, width, height, pixels);
+    gl.setRenderTarget(null);
+    target.dispose();
+    for (const m of points) m.uniforms.uPixelRatio.value = this.pixelRatio;
+    this.weather.setPixelRatio(this.pixelRatio);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    const image = ctx.createImageData(width, height);
+    const row = width * 4;
+    // WebGL rows run bottom to top.
+    for (let y = 0; y < height; y++) image.data.set(pixels.subarray((height - 1 - y) * row, (height - y) * row), y * row);
+    for (let i = 3; i < image.data.length; i += 4) image.data[i] = 255;
+    ctx.putImageData(image, 0, 0);
+    return canvas;
   }
 
   setPointer(x: number, y: number) {
@@ -438,6 +586,15 @@ export class SlamEngine {
   setWeather(mode: WeatherMode) {
     this.weather.mode = mode;
     this.nextWeatherLoss = this.time + 2.5;
+  }
+
+  /**
+   * Caps the tracker's compute, 0 (uncapped) to 1 (starved): it gets through
+   * fewer frames, keeps fewer points and loses track more easily.
+   */
+  setSqueeze(squeeze: number) {
+    this.squeezeTarget = clamp(squeeze);
+    this.nextSqueezeLoss = this.time + 1.4;
   }
 
   setSkill(skill: string | null) {
@@ -476,6 +633,12 @@ export class SlamEngine {
 
   endDrag() {
     this.orbit.dragging = false;
+  }
+
+  /** Tilting a phone looks around the shot, as if the screen were a window onto the map. Radians. */
+  setTilt(yaw: number, pitch: number) {
+    this.tilt.yaw = clamp(yaw, -0.6, 0.6);
+    this.tilt.pitch = clamp(pitch, -0.3, 0.3);
   }
 
   /** What a click would relocalize to, if anything. */
@@ -524,8 +687,10 @@ export class SlamEngine {
     ]) {
       this.stylePoints(m);
     }
-    this.currentCamMaterial.color.set(p.camera);
-    this.trajectoryMaterial.color.set(p.keyframe);
+    this.currentCam.setColor(this.colors.camera);
+    this.currentCam.setAdditive(lighting === "night");
+    this.camPin.setColor(this.colors.camera);
+    this.track.setPalette(p, lighting);
     this.loopEdge.material.color.set(p.loop);
     this.matches.material.color.set(p.tracked);
     this.board.setColors(p.boardLight, p.boardDark);
@@ -539,7 +704,7 @@ export class SlamEngine {
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.opts.lowPower ? 1.5 : 2);
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(w, h, false);
-    this.trajectoryMaterial.resolution.set(w * this.pixelRatio, h * this.pixelRatio);
+    this.track.setResolution(w, h);
     this.weather.setPixelRatio(this.pixelRatio);
     this.applyView();
   }
@@ -622,6 +787,7 @@ export class SlamEngine {
     this.sPrevTarget = this.sTarget;
     this.scrollSpeed += (rawSpeed - this.scrollSpeed) * approach(8);
     this.s += (this.sTarget - this.s) * approach(reduced ? 20 : 3.2);
+    this.updateFocus();
     const pose = this.poseAt(this.s);
     this.u = pose.u;
     if (this.train >= 1) this.head = Math.max(this.head, this.u);
@@ -639,12 +805,34 @@ export class SlamEngine {
       this.orbit.yaw -= this.orbit.yaw * k;
       this.orbit.pitch -= this.orbit.pitch * k;
     }
-    if (Math.abs(this.orbit.yaw) + Math.abs(this.orbit.pitch) > 1e-4) {
+    this.tilt.sy += (this.tilt.yaw - this.tilt.sy) * approach(7);
+    this.tilt.sp += (this.tilt.pitch - this.tilt.sp) * approach(7);
+    const yaw = this.orbit.yaw + this.tilt.sy;
+    const pitch = this.orbit.pitch + this.tilt.sp;
+    if (Math.abs(yaw) + Math.abs(pitch) > 1e-4) {
       const offset = this.tmp.copy(pos).sub(target);
       this.spherical.setFromVector3(offset);
-      this.spherical.theta += this.orbit.yaw;
-      this.spherical.phi = clamp(this.spherical.phi + this.orbit.pitch, 0.15, 1.5);
+      this.spherical.theta += yaw;
+      this.spherical.phi = clamp(this.spherical.phi + pitch, 0.15, 1.5);
       pos.copy(target).add(offset.setFromSpherical(this.spherical));
+    }
+
+    // Once the visitor has the camera, blend from the scripted shot to theirs.
+    const e = this.explore;
+    e.k += ((e.on ? 1 : 0) - e.k) * approach(reduced ? 30 : e.on ? 2.4 : 3.6);
+    const free = e.k > 0.002 ? smoother(e.k) : 0;
+    if (free > 0) {
+      e.idle += dt;
+      // Left alone, the map turns slowly.
+      if (e.on && !reduced && !this.orbit.dragging && e.idle > 5) e.goal.theta += dt * 0.03;
+      const k = approach(reduced ? 30 : 6);
+      e.radius += (e.goal.radius - e.radius) * k;
+      e.theta += (e.goal.theta - e.theta) * k;
+      e.phi += (e.goal.phi - e.phi) * k;
+      e.target.lerp(e.goal.target, k);
+      this.spherical.set(e.radius, e.phi, e.theta);
+      pos.lerp(this.tmp.setFromSpherical(this.spherical).add(e.target), free);
+      target.lerp(e.target, free);
     }
     this.camera.position.copy(pos);
     this.camera.lookAt(target);
@@ -659,7 +847,10 @@ export class SlamEngine {
     }
 
     // Loop closure.
-    if (this.u > 0.975 && this.closure < 0 && this.train >= 1) this.closure = 0;
+    if (this.u > 0.975 && this.closure < 0 && this.train >= 1) {
+      this.closure = 0;
+      this.opts.onEvent?.({ type: "loop" });
+    }
     if (this.closure >= 0) {
       this.closure += dt;
       const drift = 1 - smoother(clamp(this.closure / (reduced ? 0.01 : 2.4)));
@@ -670,29 +861,62 @@ export class SlamEngine {
     }
 
     // Tracking state.
+    this.squeeze += (this.squeezeTarget - this.squeeze) * approach(3);
     const lost = this.updateTracking(dt);
-    const weatherNoise = this.weather.severity + (this.lighting === "night" ? 0.2 : 0);
+    const weatherNoise = this.weather.severity + (this.lighting === "night" ? 0.2 : 0) + 0.45 * this.squeeze;
     this.noise += (weatherNoise + (lost ? 2.2 : 0) - this.noise) * approach(4);
+
+    // The tracker only gets through some of the frames, and none while it is lost: in between,
+    // its pose and everything drawn at it go stale.
+    this.nextFrameIn -= dt;
+    if (!lost && this.nextFrameIn <= 0) {
+      this.slamU = this.u;
+      this.nextFrameIn = this.squeeze * this.squeeze * 0.9 * (0.6 + 0.8 * Math.random());
+    }
+    const budget = 1 - 0.62 * this.squeeze;
+
+    // Fog: the map fades out with distance. The distance scales with the shot, so a wide
+    // shot thins out without going blank.
+    const fog = this.weather.fog;
+    const reach = this.camera.position.distanceTo(target);
+    const fogNear = 22 + (0.15 * reach - 22) * fog;
+    const fogFar = 110 + (Math.max(28, 1.9 * reach) - 110) * fog;
+    const fogFade = (obj: THREE.Object3D) =>
+      1 - fog * THREE.MathUtils.smoothstep(this.camera.position.distanceTo(obj.position), fogNear, fogFar);
 
     // Keyframe insertion: the blue current frame becomes a green keyframe.
     // Wireframes fade out when the viewer is right on top of them; the origin props also
     // stay out of the hero close-up so the portrait has the frame to itself.
-    const nearFade = (obj: THREE.Object3D) => clamp((this.camera.position.distanceTo(obj.position) - 5) / 5);
+    const nearFade = (obj: THREE.Object3D) => Math.max(free, clamp((this.camera.position.distanceTo(obj.position) - 5) / 5));
     const heroHide = 1 - clamp(1 - this.s / 0.6);
-    const insert = (kf: KeyframeViz, due: boolean) => {
-      if (due) kf.inserted = Math.min(1, kf.inserted + dt * (reduced ? 10 : 1.8));
+    const camPos = v3(W.estimatedPoint(this.slamU, this.drift));
+    this.shutter = Math.max(0, this.shutter - dt / (reduced ? 0.01 : 1.3));
+    const insert = (kf: KeyframeViz, due: boolean, index: number, fade = 1) => {
+      if (due) {
+        if (kf.inserted === 0) {
+          if (fade > 0.5) this.shutter = 1;
+          this.opts.onEvent?.({ type: "keyframe", index });
+        }
+        kf.inserted = Math.min(1, kf.inserted + dt * (reduced ? 10 : 1.8));
+      }
       const t = kf.inserted;
+      const g = kf.viz.group;
       const picked = this.pickHover?.kind === "keyframe" && this.pickHover.id === kf.id;
-      kf.group.scale.setScalar(Math.max(0.001, easeOutBack(t)) * (picked ? 1.35 : 1));
-      if (picked) kf.material.color.copy(this.colors.highlight);
-      else kf.material.color.copy(this.colors.camera).lerp(this.colors.keyframe, clamp(t * 1.6 - 0.4));
-      kf.material.opacity = 0.95 * nearFade(kf.group);
-      kf.group.visible = t > 0 && kf.material.opacity > 0.01;
+      g.scale.setScalar(Math.max(0.001, easeOutBack(t)) * (picked ? 1.35 : 1));
+      const color = picked
+        ? this.colors.highlight
+        : this.tmpColor.copy(this.colors.camera).lerp(this.colors.keyframe, clamp(t * 1.6 - 0.4));
+      kf.viz.setColor(color);
+      kf.pin.setColor(color);
+      // While a keyframe is being taken the live camera sits on it: it shows once the camera moves on.
+      const docked = picked ? 1 : clamp((g.position.distanceTo(camPos) - 0.6) / 1.5);
+      const opacity = (t > 0 ? 0.95 : 0) * nearFade(g) * fogFade(g) * docked * fade;
+      kf.viz.setOpacity(opacity);
+      g.visible = opacity > 0.01;
+      kf.pin.setOpacity(opacity * clamp(t * 2));
     };
-    insert(this.originKf, this.train > 0.9);
-    this.originKf.material.opacity *= heroHide;
-    this.originKf.group.visible &&= this.originKf.material.opacity > 0.01;
-    this.kfs.forEach((kf) => insert(kf, this.head >= kf.u - 0.008));
+    insert(this.originKf, this.train > 0.9, 0, heroHide);
+    this.kfs.forEach((kf, i) => insert(kf, this.head >= kf.u - 0.008, i + 1));
     const gizmoFade = nearFade(this.gizmo) * heroHide;
     (this.gizmo.material as THREE.LineBasicMaterial).opacity = 0.9 * gizmoFade;
     this.gizmo.visible = this.train > 0.9 && gizmoFade > 0.01;
@@ -719,6 +943,9 @@ export class SlamEngine {
       m.uTracked.value = sc.tracked;
       m.uTime.value = this.time;
       m.uNoise.value = this.noise;
+      m.uBudget.value = budget;
+      m.uFogNear.value = fogNear;
+      m.uFogFar.value = fogFar;
       m.uPixelRatio.value = this.pixelRatio;
     }
 
@@ -728,6 +955,9 @@ export class SlamEngine {
       m.uDrift.value = this.drift;
       m.uTime.value = this.time;
       m.uNoise.value = this.noise * 0.5;
+      m.uBudget.value = budget;
+      m.uFogNear.value = fogNear;
+      m.uFogFar.value = fogFar;
       m.uPixelRatio.value = this.pixelRatio;
     }
 
@@ -754,10 +984,13 @@ export class SlamEngine {
       m.uHighlight.value = lm.highlight;
       m.uTime.value = this.time;
       m.uNoise.value = this.noise * 0.6;
+      m.uBudget.value = budget;
+      m.uFogNear.value = fogNear;
+      m.uFogFar.value = fogFar;
       m.uPixelRatio.value = this.pixelRatio;
       if (!reduced) lm.group.rotation.y += dt * 0.06;
     }
-    this.updateLabels(overview);
+    this.updateLabels(Math.max(overview, free));
 
     // The cursor as a feature detector, plus picking for click-to-relocalize.
     this.cursor.fade += ((this.cursor.on && !this.orbit.dragging ? 1 : 0) - this.cursor.fade) * approach(10);
@@ -774,15 +1007,28 @@ export class SlamEngine {
     this.updateReticle(dt);
 
     // Trajectory and the SLAM camera.
-    this.trajectoryMaterial.opacity = 0.9 * heroHide;
-    this.trajectory.visible = heroHide > 0.01;
-    const camPos = v3(W.estimatedPoint(this.u, this.drift));
-    const look = v3(W.followPose(this.u, this.drift).target);
-    this.currentCam.position.copy(camPos);
-    this.currentCam.lookAt(look);
-    const camFade = nearFade(this.currentCam) * heroHide;
-    this.currentCam.visible = this.train >= 1 && camFade > 0.01;
-    this.currentCamMaterial.opacity = (lost ? 0.35 + 0.35 * Math.sin(this.time * 30) : 1) * camFade;
+    this.track.update({
+      drift: this.drift,
+      head: this.head,
+      cam: this.slamU,
+      opacity: heroHide,
+      flash: this.closure >= 0 ? Math.exp(-this.closure * 1.3) : 0,
+      fog: [24 + (fogNear - 24) * fog, 105 + (fogFar - 105) * fog, 0.28 + 0.67 * fog],
+    });
+    const look = v3(W.gazeTarget(this.slamU, this.drift));
+    const cam = this.currentCam.group;
+    // Handheld: the camera is never perfectly still, and less so in bad conditions.
+    const sway = reduced ? 0 : 0.018 + 0.05 * Math.min(1, this.noise);
+    cam.position
+      .copy(camPos)
+      .add(this.tmp.set(Math.sin(this.time * 1.7), 0.6 * Math.sin(this.time * 2.3 + 1), Math.cos(this.time * 1.3)).multiplyScalar(sway));
+    cam.lookAt(look);
+    const camFade = (this.train >= 1 ? 1 : 0) * nearFade(cam) * fogFade(cam) * heroHide;
+    cam.visible = camFade > 0.01;
+    this.currentCam.setOpacity((lost ? 0.35 + 0.35 * Math.sin(this.time * 30) : 1) * camFade, this.shutter);
+    this.camPin.group.position.copy(camPos);
+    this.camPin.setHeight(W.loopPoint(this.slamU)[1] - W.FLOOR_Y);
+    this.camPin.setOpacity(camFade * 0.9, this.shutter > 0 ? 1 - this.shutter : -1);
 
     this.updateMatches(active, camPos, lost);
     this.updateCovisibility(dt);
@@ -800,11 +1046,20 @@ export class SlamEngine {
   /** LOST when scrolling too fast (motion blur) or when the weather wins. */
   private updateTracking(dt: number): boolean {
     if (this.opts.reducedMotion || this.train < 1) return false;
-    this.fastScroll = this.scrollSpeed > 2.4 && this.time > this.navigatingUntil ? this.fastScroll + dt : 0;
+    const q = this.squeeze;
+    // With fewer frames getting through, less motion is enough to break tracking.
+    this.fastScroll = this.scrollSpeed > 2.4 * (1 - 0.6 * q) && this.time > this.navigatingUntil ? this.fastScroll + dt : 0;
     if (this.fastScroll > 0.2) this.lostUntil = this.time + 0.45;
+    if (q > 0.45 && this.time > this.nextSqueezeLoss) {
+      // Starved, the tracker cannot hold on: the tighter the cap, the longer and the more often it is lost.
+      this.lostUntil = this.time + 0.5 + 1.8 * q + Math.random() * 0.5;
+      this.nextSqueezeLoss = this.lostUntil + (2.2 - 1.6 * q) * (1.5 + Math.random());
+    }
     if (this.weather.severity > 0.5 && this.time > this.nextWeatherLoss) {
       this.lostUntil = this.time + 0.8 + Math.random() * 0.7;
-      this.nextWeatherLoss = this.time + 7 + Math.random() * 7;
+      // Conditions compound: fog at night breaks tracking far more often than either alone.
+      const compound = this.weather.fog > 0.5 && this.lighting === "night" ? 0.35 : 1;
+      this.nextWeatherLoss = this.time + (7 + Math.random() * 7) * compound;
     }
     const lost = this.time < this.lostUntil;
     if (this.wasLost && !lost) this.relocalizedUntil = this.time + 1.3;
@@ -816,7 +1071,6 @@ export class SlamEngine {
     for (const a of this.anchored) {
       a.obj.position.copy(a.base).add(v3(W.driftOffset(a.u, this.drift)));
     }
-    this.trajectory.geometry.setPositions(this.trajectoryPositions());
   }
 
   private updateMatches(active: string | null, camPos: THREE.Vector3, lost: boolean) {
@@ -843,13 +1097,14 @@ export class SlamEngine {
     const base = this.colors.keyframe;
     const hot = this.colors.highlight;
     this.covisEdges.forEach((e, i) => {
-      const A = this.kfs[e.a].group.position;
-      const B = this.kfs[e.b].group.position;
+      const A = this.kfs[e.a].viz.group.position;
+      const B = this.kfs[e.b].viz.group.position;
       pos.setXYZ(i * 2, A.x, A.y, A.z);
       pos.setXYZ(i * 2 + 1, B.x, B.y, B.z);
       const seen = Math.min(this.kfs[e.a].inserted, this.kfs[e.b].inserted);
       const lit = this.skill !== null && e.shared.includes(this.skill);
-      const want = seen * (this.skill === null ? this.palette.covisAlpha * (0.7 + 0.15 * e.shared.length) : lit ? 0.95 : 0.04);
+      const clear = 1 - 0.85 * this.weather.fog;
+      const want = seen * clear * (this.skill === null ? this.palette.covisAlpha * (0.7 + 0.15 * e.shared.length) : lit ? 0.95 : 0.04);
       this.covisAlpha[i] += (want - this.covisAlpha[i]) * (1 - Math.exp(-dt * 8));
       const c = lit ? hot : base;
       col.setXYZW(i * 2, c.r, c.g, c.b, this.covisAlpha[i]);
@@ -865,8 +1120,8 @@ export class SlamEngine {
       mat.opacity = 0;
       return;
     }
-    const last = this.kfs[this.kfs.length - 1]?.group.position ?? this.originKf.group.position;
-    const o = this.originKf.group.position;
+    const last = this.kfs[this.kfs.length - 1]?.viz.group.position ?? this.originKf.viz.group.position;
+    const o = this.originKf.viz.group.position;
     const attr = this.loopEdge.geometry.getAttribute("position") as THREE.BufferAttribute;
     attr.setXYZ(0, last.x, last.y, last.z);
     attr.setXYZ(1, o.x, o.y, o.z);
@@ -916,7 +1171,7 @@ export class SlamEngine {
     const pxPerUnit = h / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2));
     let best: PickTarget | null = null;
     let bestScore = 1;
-    const consider = (pos: THREE.Vector3, radius: number, t: Omit<PickTarget, "x" | "y">) => {
+    const consider = (pos: THREE.Vector3, radius: number, t: Omit<PickTarget, "x" | "y" | "world">) => {
       const v = this.tmp2.copy(pos).project(this.camera);
       if (v.z < -1 || v.z > 1) return;
       const x = ((v.x + 1) / 2) * w;
@@ -926,12 +1181,12 @@ export class SlamEngine {
       const score = Math.hypot(x - this.cursor.px, y - this.cursor.py) / r;
       if (score < bestScore) {
         bestScore = score;
-        best = { ...t, x, y };
+        best = { ...t, x, y, world: [pos.x, pos.y, pos.z] };
       }
     };
     this.kfs.forEach((kf, i) => {
       const target = { kind: "keyframe" as const, id: kf.id, label: `KF ${String(i + 1).padStart(2, "0")} · ${keyframes[i].org}`, hint: "click to relocalize" };
-      if (kf.inserted > 0.5) consider(kf.group.position, 0.9, target);
+      if (kf.inserted > 0.5) consider(kf.viz.group.position, 0.9, target);
       // A word can be visible (triangulating ahead of the camera) before its keyframe is inserted.
       const sc = this.scenes.find((x) => x.id === kf.id);
       if (sc && sc.reveal > 0.3) consider(sc.group.position, 3.4, target);
@@ -975,9 +1230,14 @@ export class SlamEngine {
     r.root.style.transform = `translate3d(${pos.x.toFixed(1)}px, ${pos.y.toFixed(1)}px, 0)`;
     const state = this.orbit.dragging ? "drag" : t ? "lock" : "free";
     if (r.root.dataset.state !== state) r.root.dataset.state = state;
-    if (t && r.label.textContent !== t.label) {
-      r.label.textContent = t.label;
-      r.sub.textContent = t.hint;
+    const locked = t ? `${t.kind}:${t.id}` : null;
+    if (locked && locked !== this.locked) this.opts.onEvent?.({ type: "lock" });
+    this.locked = locked;
+    if (t) {
+      // With the free camera a click centres on the target; otherwise it goes to its section.
+      const hint = this.explore.on ? "click to focus" : t.hint;
+      if (r.label.textContent !== t.label) r.label.textContent = t.label;
+      if (r.sub.textContent !== hint) r.sub.textContent = hint;
     }
   }
 
@@ -993,7 +1253,8 @@ export class SlamEngine {
     const weatherFactor = 1 - 0.55 * this.weather.severity;
     const light = this.lighting === "night" ? 0.8 : 1;
     const base = 1050 + 170 * Math.sin(this.time * 0.9) + 40 * Math.sin(this.time * 7.3);
-    const features = lost ? Math.round(12 + Math.random() * 30) : Math.round(base * weatherFactor * light * (active ? 1 : 0.72));
+    const starved = 1 - 0.75 * this.squeeze;
+    const features = lost ? Math.round(12 + Math.random() * 30) : Math.round(base * weatherFactor * light * starved * (active ? 1 : 0.72));
 
     const mapPoints =
       this.scenes.reduce((n, s) => n + s.count * s.reveal, 0) +
