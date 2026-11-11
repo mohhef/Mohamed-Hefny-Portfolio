@@ -1,19 +1,19 @@
 export const profile = {
   name: "Mohamed Hefny",
-  headline: "Senior software engineer at Microsoft. Graduate student at SFU, researching visual SLAM.",
+  headline: "Senior software engineer at Microsoft, with graduate research in visual SLAM at SFU.",
   intro:
     "This page is a map of how I got here, reconstructed live in your browser. Scroll to move the camera.",
   description:
-    "Mohamed Hefny is a senior software engineer at Microsoft and a graduate student at Simon Fraser University researching visual SLAM and 3D Gaussian splatting, previously at AWS (CloudFormation) and Morgan Stanley.",
+    "Mohamed Hefny is a senior software engineer at Microsoft with graduate research at Simon Fraser University in visual SLAM and 3D Gaussian splatting, previously at AWS (CloudFormation) and Morgan Stanley.",
   about: [
-    "I'm a senior software engineer at Microsoft and a graduate student at Simon Fraser University, finishing in fall 2026. At SFU I research visual SLAM.",
+    "I'm a senior software engineer at Microsoft. I did my graduate research at Simon Fraser University, on visual SLAM, and graduated in 2026.",
     "Before Microsoft I built backend services and APIs at Intact and Morgan Stanley, then worked on AWS CloudFormation, Amazon's infrastructure-as-code service. I studied software engineering at Concordia University in Montreal.",
   ],
   /** Rendered as an OpenCV-style calibration file. */
   calibration: [
     ["origin", "London, Ontario"],
     ["trained", "B.Eng. Software Engineering, Concordia"],
-    ["studying", "Graduate student, SFU (fall 2025 – fall 2026)"],
+    ["graduated", "Simon Fraser University, 2026"],
     ["current", "Senior Software Engineer, Microsoft (since Feb 2025)"],
     ["previous", "AWS CloudFormation · Morgan Stanley · Intact"],
     ["research", "visual SLAM"],

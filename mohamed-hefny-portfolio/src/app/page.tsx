@@ -10,8 +10,10 @@ const person = {
   url: profile.site,
   jobTitle: "Senior Software Engineer",
   worksFor: { "@type": "Organization", name: "Microsoft" },
-  alumniOf: { "@type": "CollegeOrUniversity", name: "Concordia University" },
-  affiliation: { "@type": "CollegeOrUniversity", name: "Simon Fraser University" },
+  alumniOf: [
+    { "@type": "CollegeOrUniversity", name: "Concordia University" },
+    { "@type": "CollegeOrUniversity", name: "Simon Fraser University" },
+  ],
   birthPlace: { "@type": "Place", name: "London, Ontario" },
   knowsAbout: ["Visual SLAM", "3D Gaussian splatting", "Cloud infrastructure", "Java", "Kotlin", "Python"],
   sameAs: profile.links.filter((l) => l.enabled !== false).map((l) => l.href),
